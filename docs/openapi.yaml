@@ -1,0 +1,806 @@
+openapi: 3.1.0
+info:
+  title: Catalog Platform API
+  version: 1.0.0
+  summary: Public catalogue and enquiry APIs plus the private notification callback.
+  description: >-
+    Machine-readable HTTP contract for the Catalog Platform. Public operations
+    are called by the browser through the API Gateway. The notification callback
+    is private service-to-service traffic and must never be exposed through the
+    public API Gateway. Keep this file synchronized with docs/api-contracts.md,
+    backend validators, frontend types, and contract tests.
+  contact:
+    name: Catalog Platform Engineering
+servers:
+  - url: /
+    description: Relative server URL. Use the configured local gateway origin in development and the deployed API origin in production.
+tags:
+  - name: Products
+    description: Product catalogue, featured products, search, and product details.
+  - name: Categories
+    description: Product category discovery and category browsing.
+  - name: Enquiries
+    description: Customer enquiry submission.
+  - name: Internal Notifications
+    description: Private callback operations used by Notification Service only.
+
+paths:
+  /api/catalog/products/featured:
+    get:
+      operationId: getFeaturedProducts
+      tags: [Products]
+      summary: Get the five configured featured products
+      description: >-
+        Returns the five products selected by backend configuration. The
+        selection is not calculated in the frontend. A successful response
+        contains exactly five products; a provider failure must not be converted
+        into an empty successful response.
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Five configured featured products.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeaturedProductsResponse'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/catalog/products:
+    get:
+      operationId: listProducts
+      tags: [Products]
+      summary: List products or search the catalogue
+      description: >-
+        When q is omitted, returns the catalogue. When q is supplied, it is
+        trimmed and matched case-insensitively using partial matching against
+        product title, description, and category. Only matching products are
+        returned. An empty or whitespace-only q is invalid and must not be
+        treated as an unfiltered catalogue request. Pagination is not part of
+        the initial contract.
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: q
+          in: query
+          required: false
+          description: >-
+            Optional search term. If present, it must contain non-whitespace
+            text. The service trims leading/trailing whitespace before matching.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          example: wireless headphones
+      responses:
+        '200':
+          description: Catalogue products, or only products matching q.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/catalog/products/{productId}:
+    get:
+      operationId: getProductById
+      tags: [Products]
+      summary: Get product details
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: productId
+          in: path
+          required: true
+          description: Product identifier from the normalized catalogue contract.
+          schema:
+            $ref: '#/components/schemas/ResourceId'
+      responses:
+        '200':
+          description: Product details.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/catalog/categories:
+    get:
+      operationId: listCategories
+      tags: [Categories]
+      summary: List product categories
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Categories available in the normalized catalogue.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriesResponse'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/catalog/categories/{categoryId}/products:
+    get:
+      operationId: listCategoryProducts
+      tags: [Categories]
+      summary: Get top-rated and additional products for a category
+      description: >-
+        Returns up to five top-rated products ordered by rating descending,
+        using the deterministic tie-breaker defined in ASSUMPTIONS.md. Products
+        in additionalProducts must not be repeated in topRated. When fewer than
+        five products exist, all are returned in topRated and additionalProducts
+        is empty.
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: categoryId
+          in: path
+          required: true
+          description: Canonical category key returned by GET /api/catalog/categories. URL-encode it as a path segment.
+          schema:
+            $ref: '#/components/schemas/ResourceId'
+      responses:
+        '200':
+          description: Category details with top-rated and additional product groups.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryProductsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/catalog/enquiries:
+    post:
+      operationId: createEnquiry
+      tags: [Enquiries]
+      summary: Submit a product or category enquiry
+      description: >-
+        Validates the referenced entity and customer details, then persists the
+        enquiry and its Outbox event in the same Catalog Service database
+        transaction. Returns 202 only after that transaction commits. Email
+        notification is asynchronous; the response confirms durable receipt,
+        not email delivery. The sales recipient is resolved from trusted
+        server-side configuration and is never supplied by the client.
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEnquiryRequest'
+            example:
+              entity:
+                type: PRODUCT
+                id: '101'
+              customer:
+                name: Jane Doe
+                email: jane@example.com
+                phone: '+919876543210'
+              message: Please share more details.
+      responses:
+        '202':
+          description: Enquiry and Outbox event have been durably committed.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateEnquiryResponse'
+              example:
+                enquiryId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                status: RECEIVED
+                message: Your enquiry has been received.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /internal/catalog/enquiries/{enquiryId}/notification-status:
+    patch:
+      operationId: reportNotificationStatus
+      tags: [Internal Notifications]
+      summary: Report successful email notification processing
+      description: >-
+        PRIVATE SERVICE-TO-SERVICE OPERATION. Callable only by the authenticated
+        Notification Service over private service connectivity. This operation
+        must not be routed through the public API Gateway or exposed to the
+        customer-facing frontend. The caller must first durably record the
+        successful email-provider acceptance and pending callback state in its
+        own delivery ledger. A non-2xx response must never cause a previously
+        successful email to be sent again; callback retries are independent of
+        email retries.
+      x-exposure: private
+      x-publicly-routable: false
+      x-authentication-required: true
+      x-authentication-mechanism: >-
+        Must use the approved service-to-service authentication mechanism and
+        private networking. The concrete mechanism is deployment/configuration
+        specific and must be documented when selected; do not treat event IDs or
+        correlation IDs as credentials.
+      parameters:
+        - name: enquiryId
+          in: path
+          required: true
+          description: Catalog Service enquiry UUID.
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationStatusCallbackRequest'
+            example:
+              eventId: 7a7b9e12-bd9a-4f4b-a0a8-5f7f62e5bc30
+              notificationStatus: SENT
+              providerMessageId: mail-provider-message-123
+              processedAt: '2026-11-20T15:30:00Z'
+      responses:
+        '200':
+          description: Callback safely applied, recognized as a duplicate, or ignored as stale.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationStatusCallbackResponse'
+              examples:
+                applied:
+                  summary: First successful callback
+                  value:
+                    enquiryId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                    status: PROCESSED
+                    callbackResult: APPLIED
+                duplicate:
+                  summary: Duplicate callback event
+                  value:
+                    enquiryId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                    status: PROCESSED
+                    callbackResult: DUPLICATE
+                staleIgnored:
+                  summary: Enquiry was already resolved
+                  value:
+                    enquiryId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                    status: RESOLVED
+                    callbackResult: STALE_IGNORED
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  parameters:
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      description: >-
+        Optional diagnostic identifier. If omitted, Catalog Service generates
+        one. The effective value is returned in the X-Correlation-ID response
+        header and propagated through asynchronous processing where available.
+        This value is not an authentication credential.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+
+  headers:
+    CorrelationId:
+      description: Effective correlation/request identifier for this request.
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Malformed request, invalid path/query parameter, or invalid JSON structure.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnprocessableEntity:
+      description: Request fields are structurally valid but fail business or entity validation.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Requested product, category, or enquiry does not exist.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Event identity or state conflict that cannot be treated as a safe duplicate or stale callback.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Public enquiry rate limit exceeded.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+        Retry-After:
+          description: Suggested delay before retrying, when known.
+          schema:
+            type: integer
+            minimum: 0
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Internal service caller is not authenticated.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Authenticated caller is not authorized to invoke the internal operation.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadGateway:
+      description: Upstream product provider returned an invalid or unusable response.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServiceUnavailable:
+      description: A temporary service or dependency failure prevents the operation from completing safely.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    GatewayTimeout:
+      description: Upstream product provider did not respond within the configured timeout.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Unexpected internal failure. Stack traces and internal details are not exposed.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ResourceId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: Opaque resource identifier normalized to a string.
+
+    Product:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - description
+        - category
+        - imageUrl
+        - price
+        - rating
+      properties:
+        id:
+          $ref: '#/components/schemas/ResourceId'
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          minLength: 1
+          maxLength: 128
+        imageUrl:
+          type: string
+          format: uri
+        price:
+          $ref: '#/components/schemas/Price'
+        rating:
+          oneOf:
+            - $ref: '#/components/schemas/Rating'
+            - type: 'null'
+
+    Price:
+      type: object
+      additionalProperties: false
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          minimum: 0
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: ISO 4217 currency code.
+
+    Rating:
+      type: object
+      additionalProperties: false
+      required: [rate, count]
+      properties:
+        rate:
+          type: number
+        count:
+          type: integer
+          minimum: 0
+
+    Category:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          $ref: '#/components/schemas/ResourceId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    FeaturedProductsData:
+      type: object
+      additionalProperties: false
+      required: [products]
+      properties:
+        products:
+          type: array
+          minItems: 5
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/Product'
+
+    ProductsData:
+      type: object
+      additionalProperties: false
+      required: [products]
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+
+    CategoriesData:
+      type: object
+      additionalProperties: false
+      required: [categories]
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+
+    CategoryProductsData:
+      type: object
+      additionalProperties: false
+      required: [category, topRated, additionalProducts]
+      properties:
+        category:
+          $ref: '#/components/schemas/Category'
+        topRated:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/Product'
+        additionalProducts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+      description: >-
+        Product IDs must be unique across topRated and additionalProducts.
+        Ordering and disjointness are enforced by Catalog Service.
+
+    FeaturedProductsResponse:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/FeaturedProductsData'
+
+    ProductsResponse:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ProductsData'
+
+    ProductResponse:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [product]
+          properties:
+            product:
+              $ref: '#/components/schemas/Product'
+
+    CategoriesResponse:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/CategoriesData'
+
+    CategoryProductsResponse:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/CategoryProductsData'
+
+    EnquiryEntity:
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          type: string
+          enum: [PRODUCT, CATEGORY]
+        id:
+          $ref: '#/components/schemas/ResourceId'
+
+    EnquiryCustomer:
+      type: object
+      additionalProperties: false
+      required: [name, email, phone]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Must contain non-whitespace text after trimming.
+        email:
+          type: string
+          format: email
+          minLength: 3
+          maxLength: 254
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Must contain non-whitespace text after trimming; the implementation applies the selected phone-number policy.
+
+    CreateEnquiryRequest:
+      type: object
+      additionalProperties: false
+      required: [entity, customer]
+      properties:
+        entity:
+          $ref: '#/components/schemas/EnquiryEntity'
+        customer:
+          $ref: '#/components/schemas/EnquiryCustomer'
+        message:
+          type: string
+          maxLength: 2000
+          description: Optional customer message. Must not be interpreted as recipient or routing information.
+
+    EnquiryStatus:
+      type: string
+      enum: [RECEIVED, PROCESSED, RESOLVED]
+
+    CreateEnquiryResponse:
+      type: object
+      additionalProperties: false
+      required: [enquiryId, status, message]
+      properties:
+        enquiryId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          const: RECEIVED
+        message:
+          type: string
+
+    NotificationStatusCallbackRequest:
+      type: object
+      additionalProperties: false
+      required: [eventId, notificationStatus, providerMessageId, processedAt]
+      properties:
+        eventId:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Stable ID of the originating CATALOG_ENQUIRY_SUBMITTED event.
+        notificationStatus:
+          type: string
+          const: SENT
+        providerMessageId:
+          type: string
+          minLength: 1
+          maxLength: 256
+        processedAt:
+          type: string
+          format: date-time
+
+    CallbackResult:
+      type: string
+      enum: [APPLIED, DUPLICATE, STALE_IGNORED]
+
+    NotificationStatusCallbackResponse:
+      type: object
+      additionalProperties: false
+      required: [enquiryId, status, callbackResult]
+      properties:
+        enquiryId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/EnquiryStatus'
+        callbackResult:
+          $ref: '#/components/schemas/CallbackResult'
+
+    ErrorDetail:
+      type: object
+      additionalProperties: false
+      required: [field, message]
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+
+    ErrorBody:
+      type: object
+      additionalProperties: false
+      required: [code, message, requestId]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        requestId:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+
+x-contract-governance:
+  sourceOfTruth:
+    - docs/api-contracts.md
+    - SPEC.md
+  synchronizationRule: >-
+    When a route, DTO, validation rule, or error meaning changes, update
+    docs/api-contracts.md, this OpenAPI file, backend validators, frontend
+    types, and contract tests in the same change.
+  implementationNotes:
+    - >-
+      The customer name, email, phone, and message maximum lengths in this
+      initial schema are proposed contract ceilings. Confirm them in the
+      implemented validators and keep docs/api-contracts.md synchronized.
+    - >-
+      The exact service-to-service authentication scheme for the private
+      callback is intentionally not selected in this document. The endpoint
+      remains private and authenticated; record the concrete mechanism in
+      deployment/configuration documentation once selected.
+    - >-
+      A relative server URL is used because the actual local gateway port and
+      private Catalog Service origin must come from the implemented runtime
+      configuration rather than being guessed here.

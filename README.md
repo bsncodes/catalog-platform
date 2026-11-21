@@ -1,1 +1,278 @@
-# catalog-platform
+# Catalog Platform
+
+A responsive product catalogue with product discovery, search, product details and customer enquiries. The application is designed as a small proof of concept with replaceable product and email providers, a locally runnable workflow and an AWS-compatible target architecture.
+
+> **Documentation status:** This README is the pre-implementation baseline. The architecture and API paths below are approved design, not proof that the application has already been built. Before submission, the implementation engineer must replace every `VERIFY AFTER IMPLEMENTATION` marker with the actual ports, commands, environment variables and test results, then test the setup from a clean checkout. Do not claim a feature or command is working until it has been run successfully.
+
+## Assessment scope
+
+The initial customer experience covers:
+
+- A homepage showing five backend-configured featured products.
+- Category browsing with top-rated and additional products.
+- Text-based product search.
+- Product details.
+- A product enquiry form that durably accepts the enquiry, starts asynchronous sales email notification and shows the customer a Thank You/received confirmation.
+
+Category enquiries are supported as an extension of the same enquiry model and workflow. The original product enquiry journey remains the critical assessment path.
+
+## Technology choices
+
+The assessment asks for one client and one backend from its permitted options. This project chooses:
+
+| Layer | Choice | Reason |
+|---|---|---|
+| Client | React + TypeScript | A component-based web UI with strong typing and a straightforward local build. |
+| Backend | Node.js + TypeScript + Express | A TypeScript backend that shares types and validation contracts with the frontend ecosystem. |
+| Frontend tooling | Vite | Fast local development and static production build. |
+| Package manager | pnpm | Consistent dependency management across the workspace. |
+| API validation | Zod | Runtime validation at application boundaries. |
+| Persistence | PostgreSQL | Durable enquiry, outbox and notification delivery records. |
+| Messaging | AWS SQS Standard Queue; ElasticMQ locally | AWS-compatible asynchronous messaging without requiring an AWS account for local review. |
+| Local email | Mailpit | Captures test emails locally without a paid email account or sending real email. |
+| Production email target | Amazon SES | Replaceable production email-provider adapter. |
+| Local API gateway | Nginx | Serves the frontend and proxies browser API requests to Catalog Service. |
+| Local execution | Docker Compose | Runs the complete core workflow through a reproducible local environment. |
+
+The initial product data source is Fake Store API. It is accessed only by Catalog Service through a provider abstraction; the browser must never call it directly.
+
+## Architecture
+
+There are exactly two business microservices: **Catalog Service** and **Notification Service**. The browser communicates with backend APIs only through the API Gateway. Notification Service is a private worker and is not exposed through the public frontend API.
+
+```mermaid
+flowchart TD
+    Browser[React browser app] --> Gateway[Nginx API Gateway]
+    Gateway --> Catalog[Catalog Service]
+    Catalog --> ProductProvider[Product provider interface]
+    ProductProvider --> FakeStore[Fake Store API]
+    Catalog --> CatalogDB[(Catalog PostgreSQL database)]
+    Catalog --> Outbox[Transactional Outbox publisher]
+    Outbox --> Queue[ElasticMQ locally / Amazon SQS in production]
+    Queue --> Notification[Notification Service]
+    Notification --> NotificationDB[(Notification PostgreSQL database)]
+    Notification --> Mail[Mailpit locally / Amazon SES in production]
+    Notification -->|Private status callback| Catalog
+```
+
+### Service ownership
+
+**Catalog Service** owns product access and normalization, featured-product selection, category browsing, search, product details, enquiry creation and persistence, enquiry lifecycle status, the Transactional Outbox, SQS publishing and the private notification-status callback API.
+
+**Notification Service** owns SQS consumption, notification processing, email templates and provider integration, the notification delivery ledger, idempotency, callback retry state and the Circuit Breaker for Catalog Service communication.
+
+Each service owns its data. Notification Service must never read or write Catalog Service database tables directly. For local development, a PostgreSQL container may host separate logical databases with separate credentials and migrations.
+
+### Enquiry lifecycle
+
+The enquiry's business status is owned exclusively by Catalog Service:
+
+```text
+RECEIVED → PROCESSED → RESOLVED
+```
+
+1. Catalog Service validates the customer and product/category reference, then commits the enquiry and its Outbox event in one database transaction.
+2. The API returns `202 Accepted` only after that transaction commits. The response means the enquiry has been durably received; it does not mean the email has already been sent.
+3. The Outbox publisher publishes the event to SQS. Notification Service consumes it and records processing in its own delivery ledger.
+4. After the configured email provider accepts the message, Notification Service durably records the send result and attempts the private Catalog Service callback.
+5. Catalog Service moves the enquiry to `PROCESSED` only after it successfully validates and persists the callback.
+6. `RESOLVED` is a later explicit business action. Email delivery does not resolve an enquiry.
+
+If email sending fails, the enquiry remains `RECEIVED`. If email sending succeeds but the callback fails, the callback is retried durably without sending the email again. Provider acceptance does not guarantee delivery to the recipient's inbox.
+
+## Local setup
+
+The required reviewer experience is a clean local run in under 10 minutes, without an AWS account, AWS credentials, paid services or an external email account.
+
+### Prerequisites
+
+- Git.
+- Docker with Docker Compose v2.
+- An internet connection if using Fake Store API as the active local product provider.
+
+Node.js and pnpm are needed only for host-based development or running workspace commands outside the containers. **VERIFY AFTER IMPLEMENTATION:** record the supported Node.js and pnpm versions from the repository's actual tool-version files and package configuration.
+
+### Start the application
+
+Clone the repository and change into its directory, then run the following two setup commands from the repository root:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+**VERIFY AFTER IMPLEMENTATION:** Run these exact commands from a clean checkout. Confirm migrations and local queues are initialized, all health checks become ready, and the complete browser workflow starts. If the actual startup command or required environment setup differs, update this section to match the verified implementation.
+
+### Local URLs
+
+| Component | URL | Status |
+|---|---|---|
+| Catalogue web application | `VERIFY AFTER IMPLEMENTATION` | Record the actual host and port exposed by Docker Compose. |
+| Mailpit web interface | `VERIFY AFTER IMPLEMENTATION` | Record the actual host and port exposed by Docker Compose. |
+| Catalog Service health/readiness | `VERIFY AFTER IMPLEMENTATION` | Document only if intentionally exposed for local diagnostics. |
+
+The browser should use the same-origin API path `/api/catalog`; it should not need internal service hostnames or ports.
+
+### Stop and inspect the environment
+
+Run from the repository root:
+
+```bash
+# Stop and remove the containers and network; retain named database volumes.
+docker compose down
+
+# Inspect running services.
+docker compose ps
+
+# Follow service logs.
+docker compose logs -f
+```
+
+To delete local database/queue volumes and reset local state, use `docker compose down -v`. **This is destructive:** it removes persisted local development data.
+
+## Configuration
+
+`.env.example` is the committed reference for local configuration. Copy it to `.env` and provide only local values. Never commit `.env`, passwords, tokens, API keys, production credentials or other secrets.
+
+**VERIFY AFTER IMPLEMENTATION:** Add a table here listing every required variable, its purpose, whether it is required locally and a safe example value. Keep variable names and defaults synchronized with the actual configuration schema and `.env.example`; do not invent or document unused variables.
+
+Expected configuration areas include:
+
+- Catalog and Notification Service database connection settings.
+- Local SQS-compatible endpoint, queue names and AWS region settings needed by the AWS SDK v3.
+- Mailpit SMTP host and port.
+- Trusted sales inbox configuration.
+- Product provider selection and optional fixture mode.
+- Public API base path and local service ports.
+
+No AWS credentials should be required for the default local workflow. Production AWS access should use the appropriate IAM task roles and managed secret configuration, not credentials committed to this repository.
+
+## Product and API behaviour
+
+All browser requests go through the API Gateway under `/api/catalog`. The following is the approved initial public API surface; update the exact query parameter names, request/response schemas and error formats from `docs/openapi.yaml` and `docs/api-contracts.md` after those contracts are implemented.
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/catalog/products/featured` | Return the five backend-configured featured products. |
+| `GET` | `/api/catalog/products` | List products and support text search. |
+| `GET` | `/api/catalog/products/:productId` | Return normalized details for one product. |
+| `GET` | `/api/catalog/categories` | Return available categories. |
+| `GET` | `/api/catalog/categories/:categoryId/products` | Return top-rated and additional products for a category. |
+| `POST` | `/api/catalog/enquiries` | Create a product or category enquiry. |
+
+The Notification Service callback is an internal service-to-service operation, not a public browser endpoint:
+
+```text
+PATCH /internal/catalog/enquiries/:enquiryId/notification-status
+```
+
+### Enquiry request
+
+The initial request shape is:
+
+```json
+{
+  "entity": {
+    "type": "PRODUCT",
+    "id": "101"
+  },
+  "customer": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+919876543210"
+  },
+  "message": "Please share more details."
+}
+```
+
+`entity.type` is `PRODUCT` or `CATEGORY`. Name, email and phone are required; message is optional. The backend resolves the sales recipient from trusted server-side configuration. The frontend must not supply an arbitrary recipient address.
+
+A successful enquiry submission returns `202 Accepted` after durable persistence. The customer-facing confirmation should say the enquiry was received, not claim that the sales email has already reached the inbox.
+
+## Testing and verification
+
+Tests should cover the critical customer journey and important failure scenarios, not just isolated happy paths.
+
+Expected coverage includes:
+
+- Featured product selection and product-provider normalization.
+- Category ranking, deterministic tie-breaking and exclusion of duplicates between top-rated and additional products.
+- Search matching and empty/whitespace query validation.
+- Product detail handling for missing products and provider failures.
+- Enquiry validation and atomic enquiry-plus-Outbox persistence.
+- SQS event validation, duplicate delivery and consumer idempotency.
+- Email template rendering and escaping of customer-provided content.
+- Email failure leaving the enquiry in `RECEIVED`.
+- Callback retry after email success without resending the email.
+- Duplicate/stale callbacks and protection against regressing `RESOLVED`.
+- Critical frontend states and the end-to-end enquiry-to-email journey.
+
+**VERIFY AFTER IMPLEMENTATION:** Add the exact, runnable commands from the root `package.json` and workspace scripts for installing dependencies, running unit/API/integration/E2E tests, linting and TypeScript checks. Record which tests actually passed. Do not state that a test suite passes unless it has been run against the final relevant commit.
+
+## Production architecture target
+
+The local setup is designed to use AWS-compatible service interfaces. The production target maps the local components as follows:
+
+| Local component | AWS production target |
+|---|---|
+| Static React build served by Nginx | Amazon S3 + CloudFront |
+| Nginx public API proxy | Amazon API Gateway HTTP API; CloudFront routes API paths to API Gateway |
+| Catalog Service container | Amazon ECS Fargate |
+| Notification Service worker container | Amazon ECS Fargate |
+| PostgreSQL | Amazon RDS for PostgreSQL, preserving service data ownership |
+| ElasticMQ | Amazon SQS Standard Queue and Dead Letter Queue |
+| Mailpit | Amazon SES |
+| Local environment configuration | IAM task roles and AWS Secrets Manager where appropriate |
+
+Full production AWS provisioning is not part of the initial assessment scope. ElasticMQ is an SQS-compatible local implementation, not a complete emulator of every AWS SQS-managed behaviour. Local testing demonstrates the application integration with the subset used; it does not prove every production AWS service characteristic.
+
+## Scope and known limitations
+
+The initial scope intentionally excludes:
+
+- Shopping cart, checkout, payment processing and inventory management.
+- Customer accounts and general customer authentication.
+- A sales dashboard or CRM integration.
+- Enquiry entity types other than `PRODUCT` and `CATEGORY`.
+- Multi-tenancy, SNS fan-out and additional business microservices.
+- Kafka, RabbitMQ, BullMQ, Redis, Kubernetes and EKS.
+- Full production AWS provisioning.
+- SES bounce/delivery-event integration; provider acceptance is the initial success signal.
+
+`RESOLVED` is represented in the domain and transition rules, but a complete authenticated sales-management interface is deferred. The exact implemented limitations must be reviewed and updated before submission.
+
+## Project documentation
+
+| Document | Purpose |
+|---|---|
+| [`CLAUDE.md`](./CLAUDE.md) | Engineering instructions, guardrails and implementation workflow. |
+| [`SPEC.md`](./SPEC.md) | Product and technical specification. |
+| [`PLAN.md`](./PLAN.md) | Implementation phases, targets and verification gates. |
+| [`ASSUMPTIONS.md`](./ASSUMPTIONS.md) | Ambiguities, accepted assumptions and validation approach. |
+| [`DECISIONS.md`](./DECISIONS.md) | Architecture decisions, alternatives, rationale and consequences. |
+| [`AI_USAGE.md`](./AI_USAGE.md) | Actual AI tools/models, key prompts or moments, mistakes and corrections. |
+| [`TIME_SPENT.md`](./TIME_SPENT.md) | Actual measured time across planning, building, testing and reviewing. |
+| `PR_DESCRIPTION.md` | Pull Request summary, test evidence and known limitations (created for the submission). |
+| `docs/openapi.yaml` | Machine-readable API contract (to be added/verified with implementation). |
+| `docs/api-contracts.md` | API request/response and error contract details (to be added/verified with implementation). |
+
+## Assessment submission checklist
+
+Before sending the repository to the reviewer:
+
+- [ ] Replace all `VERIFY AFTER IMPLEMENTATION` markers with accurate, tested details.
+- [ ] Verify the application starts from a clean checkout in under 10 minutes using the documented commands.
+- [ ] Confirm the five original customer acceptance scenarios are demonstrable.
+- [ ] Confirm Fake Store API is called only by Catalog Service.
+- [ ] Confirm the full product enquiry journey, including the email in Mailpit, works locally.
+- [ ] Verify email failure and callback-retry behaviour; do not resend a successfully accepted email because of a callback failure.
+- [ ] Include source code and tests; do not commit secrets.
+- [ ] Update this README with actual ports, environment variables, test commands and remaining limitations.
+- [ ] Complete `AI_USAGE.md` and `TIME_SPENT.md` using actual evidence; do not fabricate tool usage, mistakes, test results, review outcomes or durations.
+- [ ] Push the implementation feature branch and create one PR targeting `main`.
+- [ ] Leave the PR open and unmerged.
+- [ ] Record the actual independent PR review verdict and reviewed commit SHA; do not claim review completion before it occurs.
+
+## Further work
+
+For the significant design trade-offs, deferred work and next steps with additional time, see [`DECISIONS.md`](./DECISIONS.md). The implementation plan and exit gates are in [`PLAN.md`](./PLAN.md).

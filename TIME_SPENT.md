@@ -1,0 +1,123 @@
+# Catalog Platform — Time Spent
+
+**Version:** 1.0  
+**Status:** Tracking template — actual execution time not yet recorded  
+**Project:** AI-Native Engineer Code Challenge  
+**Planning baseline:** 180 minutes (from `PLAN.md`)  
+**Tracking rule:** Record measured time only; never copy target time into the actual column.
+
+---
+
+## 1. Purpose
+
+This document records the actual time spent planning, implementing, testing, reviewing and preparing the Catalog Platform submission. It is intended to make the assessment time-box transparent and auditable.
+
+`PLAN.md` defines an approximate 180-minute allocation. This file records what actually happened. The target is not evidence of time spent, and exceeding it is not a reason to skip required functionality, testing or review.
+
+## 2. Time-Recording Rules
+
+1. Record actual start and finish times as work happens, preferably at the end of each phase or focused session.
+2. Record active project elapsed time, including time spent supervising AI-assisted implementation, running commands, waiting for relevant builds/tests and reviewing outputs while the task is in progress.
+3. Exclude meal breaks, personal breaks and unrelated work. Record substantial interruptions separately so the elapsed timeline remains understandable.
+4. Do not reconstruct precise durations from memory. Mark an entry `Not tracked` when reliable timing evidence is unavailable.
+5. Keep the date, timezone and clock format consistent. Use `Asia/Kolkata` and 24-hour local time unless the assessment specifies otherwise.
+6. Link each phase to evidence where possible: commits, PR activity, test output, screenshots or completed deliverables.
+7. If work is resumed on another day, create a separate session entry. Sum the session durations for the phase; do not treat the calendar gap as working time.
+8. Record the final measured total even when it exceeds 180 minutes. Explain overruns and deferred work rather than altering the numbers.
+
+**Duration definitions**
+
+- **Active project time:** Time spent directly progressing or supervising the assessment work, excluding breaks and unrelated interruptions.
+- **Wall-clock span:** Time between the first and last recorded work timestamps, including breaks and interruptions that occurred within that span.
+- **AI tool runtime (optional):** Time reported by the tool for an agent or job. This is a diagnostic metric and must not be added again to active project time when it overlaps with the same session.
+
+Use active project time for the phase total and comparison with the 180-minute target. Use wall-clock span only to explain the overall timeline.
+
+## 3. Phase-Level Summary
+
+The targets below are copied from the approved phase allocation in `PLAN.md`. Actual durations and variance are intentionally blank until measured.
+
+| Phase | Activity | Target (min) | Actual (min) | Variance (min) | Status / evidence |
+|---|---|---:|---:|---:|---|
+| 0 | Planning and repository inspection | 15 | — | — | Not yet measured; record repository baseline and feature branch |
+| 1 | Repository and infrastructure setup | 15 | — | — | Not yet measured; link setup commits and local startup evidence |
+| 2 | Catalog Service | 35 | — | — | Not yet measured; link implementation commits and API tests |
+| 3 | Frontend | 35 | — | — | Not yet measured; link implementation commits and UI verification |
+| 4 | Enquiry and event processing | 35 | — | — | Not yet measured; link service commits and workflow/failure-path tests |
+| 5 | Testing and integration | 20 | — | — | Not yet measured; link exact test commands and results |
+| 6 | PR and independent review | 15 | — | — | Not yet measured; link PR, reviewer verdict and reviewed SHA |
+| 7 | Final corrections and documentation | 10 | — | — | Not yet measured; link final corrections and submission evidence |
+| | **Total** | **180** | **—** | **—** | **Calculate after all actual phase entries are recorded** |
+
+**Variance formula:** `Actual minutes − Target minutes`. A positive value is an overrun; a negative value is time saved. Do not report a total actual duration while any material execution time is untracked without clearly qualifying the total.
+
+## 4. Session Log
+
+Add one row for each focused work session. Use additional rows when a phase spans multiple sessions or days.
+
+| Session | Date | Phase | Start (IST) | End (IST) | Breaks / unrelated interruption (min) | Active project time (min) | Work performed and outcome | Evidence |
+|---|---|---|---|---|---:|---:|---|---|
+| S-001 | Pending | Pending | Pending | Pending | — | — | Execution session not yet logged | — |
+| S-002 | Pending | Pending | Pending | Pending | — | — | Execution session not yet logged | — |
+| S-003 | Pending | Pending | Pending | Pending | — | — | Execution session not yet logged | — |
+
+Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
+
+## 5. Planning and Documentation Preparation
+
+The project documents `ASSUMPTIONS.md`, `DECISIONS.md`, `PLAN.md` and `AI_USAGE.md` have been prepared before implementation. Their existence is documented in the repository, but the time spent producing them was not measured with a reliable timer in this record.
+
+**Treatment:** Do not assign retrospective minute estimates to this preparation work. If reliable contemporaneous timestamps or tooling records are available, add a clearly labelled pre-execution session to the session log and include it in the total only if it falls within the assessment's measured time window. Otherwise, state that pre-execution documentation time is untracked and keep it separate from the measured implementation total.
+
+## 6. Milestone Timeline
+
+Complete this section using actual timestamps and links.
+
+| Milestone | Actual date and time (IST) | Evidence / reference |
+|---|---|---|
+| Repository inspection completed | Pending | Pending |
+| Feature branch created | Pending | Pending |
+| Local environment starts successfully | Pending | Pending |
+| Catalogue experience completed | Pending | Pending |
+| Enquiry-to-email happy path verified | Pending | Pending |
+| Failure and retry paths verified | Pending | Pending |
+| Assessment PR opened | Pending | Pending |
+| Independent reviewer verdict received | Pending | Pending |
+| Required corrections completed | Pending | Pending |
+| Final verification completed | Pending | Pending |
+
+## 7. Time-Box Review
+
+Complete after implementation and review are finished.
+
+| Metric | Actual result |
+|---|---|
+| Total active project time | Pending — calculate from measured sessions |
+| Total wall-clock span | Pending — derive from first and last timestamps |
+| Total breaks / unrelated interruptions | Pending |
+| Difference from 180-minute target | Pending |
+| Phases completed within target | Pending |
+| Main causes of overruns or savings | Pending |
+| Work deferred or left incomplete | Pending — cross-reference `PLAN.md` and known limitations |
+
+### Reflection
+
+- **What consumed more time than expected?** Pending.
+- **What was completed faster than expected, and why?** Pending.
+- **Which implementation or verification trade-offs were made?** Pending; link relevant decisions and review findings.
+- **Did the time-box affect quality or scope?** Pending; describe the evidence and any deferred work.
+
+## 8. Before Submission
+
+- [ ] Replace all `Pending` placeholders with measured values or an explicit `Not tracked` explanation.
+- [ ] Ensure phase actuals reconcile with the session log.
+- [ ] Calculate total active project time and variance from 180 minutes.
+- [ ] Explain any untracked preparation time; do not imply it was included in the measured total.
+- [ ] Link commits, tests and PR/reviewer evidence where available.
+- [ ] Ensure claims match `PLAN.md`, `AI_USAGE.md`, the Git history and the final PR.
+- [ ] Remove unused placeholder session rows.
+- [ ] Record incomplete work and limitations honestly.
+
+---
+
+**Accuracy statement:** This document starts as an unfilled tracking template. No actual implementation duration, execution timestamp, test result or reviewer duration is asserted until it is measured and entered.
