@@ -92,6 +92,8 @@ All entries in this initial register are marked `ACCEPTED` unless explicitly ide
 | ASM-030 | Callback authentication | Protect the internal callback with private service connectivity and service-to-service authentication. | HIGH | ACCEPTED |
 | ASM-031 | Featured products | A configured featured product missing from the provider fails the request (502) instead of showing fewer than five. | LOW | IMPLEMENTED |
 | ASM-032 | Callback authentication | Implement ASM-030 as a shared bearer token on a separate internal listener (port 3001) that the Gateway never routes. | HIGH | IMPLEMENTED |
+| ASM-033 | Callback terminal state | Add a monitored terminal `FAILED` callback status for non-retryable rejections and exhausted callback retries. | MEDIUM | IMPLEMENTED |
+| ASM-034 | Duplicate email window | A crash after provider acceptance but before the ledger records `SENT` can resend one email on redelivery; this window is accepted, not eliminated. | MEDIUM | ACCEPTED |
 
 ---
 
@@ -876,6 +878,34 @@ Catalog Service serves the internal callback on a separate HTTP listener (`INTER
 
 **Validation**
 API tests: missing/wrong token → 401; valid token → 200; the public app returns 404 for `/internal/...`.
+
+---
+
+### ASM-033 — Terminal Callback Failure State
+
+**Source:** `CLAUDE.md` §11 ("or the callback enters an explicitly monitored terminal-failure state"); `docs/data-model.md` §4.1.
+**Impact:** MEDIUM
+**Status:** IMPLEMENTED (covered by `services/notification/test/integration/processor.test.ts`)
+
+**Ambiguity**
+The data model lists callback statuses `NULL`, `PENDING` and `COMPLETED`, while `CLAUDE.md` allows an explicitly monitored terminal failure without naming it.
+
+**Assumption**
+`notification_deliveries.callback_status` also allows `FAILED`. It is set when Catalog Service rejects the callback in a way that can never succeed (HTTP 400/404/409) or after `CALLBACK_MAX_ATTEMPTS` (default 50, backoff capped at 5 minutes). Each transition logs at `error` with `errorCategory=INTERNAL_COMMUNICATION` so it can be alerted on (CloudWatch metric filter in AWS). The enquiry stays `RECEIVED` in Catalog. 401/403 and 5xx/network/timeouts stay retryable; only network/timeout/5xx/429 count as Circuit Breaker failures.
+
+**Validation**
+Tests: 404 → `FAILED`; max attempts → `FAILED`; 503 → `PENDING` with backoff; circuit open → `PENDING` without a call.
+
+---
+
+### ASM-034 — Duplicate Email Window Between Provider Acceptance and Ledger Write
+
+**Source:** `CLAUDE.md` §10–11 (at-least-once delivery; never resend because of a callback failure).
+**Impact:** MEDIUM
+**Status:** ACCEPTED
+
+**Assumption**
+SMTP/SES acceptance and the PostgreSQL ledger write cannot be made atomic. If the process crashes after the provider accepts the email but before `email_status = SENT` is committed, SQS redelivers the message and the email is sent again. The window is a few milliseconds and is accepted for this proof of concept. A callback failure never causes a resend, because `SENT` is committed before any callback attempt. A per-event email lease (`email_lease_until`) stops two concurrent consumers from both sending.
 
 ---
 
