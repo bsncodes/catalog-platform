@@ -90,6 +90,7 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 | ~13:48 | *"yes approved all your git commands go ahead"* | Given after Claude Code's auto-mode safety check blocked the first `git push`. Branches pushed and PRs opened. Merging was left to the owner, and force-pushes were avoided (a rebased branch was reset to its pushed tip instead). |
 | ~14:00 | *"can you setup and add all the relevant github CI/CD pipeline workflow actions in the PR2 only"* | Added CI (quality, integration with service containers, compose smoke), CodeQL and Dependabot to PR #2. CD to AWS was **not** automated: there is no AWS account or OIDC role, and the owner had asked for no deploys. Documented in the README. |
 | 14:33 | *"note all this TIME_SPEND and AI_USAGE"* | This section, the review/runtime records below and the `TIME_SPENT.md` checkpoint. |
+| 14:43 | *"we should only consider only the active time in the session, irrespective of how many agents are working, means the time we started and paused, and then resumed, until we finished, and the total time shouldn't exceed 180 mins."* | `TIME_SPENT.md` now counts session wall-clock time only: parallel agents add nothing, waiting inside the session counts, and there is a hard stop at 16:32:41 IST. |
 
 ### 4.7 Tooling and permission events
 
@@ -152,7 +153,7 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 
-**Reviewer runtime (diagnostic only; overlaps implementation time, not added to `TIME_SPENT.md` totals):**
+**Reviewer runtime (diagnostic only; it runs inside the session's wall clock, so per the owner's rule it adds nothing to `TIME_SPENT.md`):**
 
 | Review run | Reviewed SHA | Wall time | Tool calls |
 |---|---|---:|---:|

@@ -47,11 +47,13 @@ The targets below are copied from the approved phase allocation in `PLAN.md`. Ph
 | 5 | Testing and integration | 20 | Interleaved | — | See session log §4 |
 | 6 | PR and independent review | 15 | Interleaved | — | See session log §4 |
 | 7 | Final corrections and documentation | 10 | Interleaved | — | See session log §4 |
-| | **Total so far (13:32–14:36)** | **180** | **64** | **−116 (in progress)** | **Final total reconciled at session end** |
+| | **Total so far (13:32:41–14:43, no pauses)** | **180** | **71** | **in progress** | **Hard stop 16:32:41 IST; final total reconciled at session end** |
 
 **Variance formula:** `Actual minutes − Target minutes`. A positive value is an overrun; a negative value is time saved. Do not report a total actual duration while any material execution time is untracked without clearly qualifying the total.
 
 ## 4. Session Log
+
+**Time-accounting rule (owner direction, 2026-11-22 14:43):** count only the session's active wall-clock time, from start to pause and from resume to finish, *irrespective of how many agents are working*. Parallel subagents, CI runs and waiting for owner actions inside a running session all count once, as wall-clock time. Only an explicit pause stops the clock. The total must not exceed **180 minutes**; this session started at 13:32:41 IST, so implementation stops at **16:32:41 IST** at the latest.
 
 Add one row for each focused work session. Use additional rows when a phase spans multiple sessions or days.
 
@@ -59,7 +61,7 @@ Add one row for each focused work session. Use additional rows when a phase span
 |---|---|---|---|---|---:|---:|---|---|
 | S-001 | 2026-11-22 | 0, 1, 2, 6 (interleaved) | 13:32 | 13:54 | 0 | 22 | Repository inspection; workspace + contracts + infra (PR 1); Catalog Service implementation and tests; PR strategy changed to sequential PRs (ADR-017, owner decision at ~13:44); PR #1 opened, reviewed (CHANGES REQUIRED, 2×P2 + 3×P3), fixed, re-reviewed (REVIEW PASSED); owner merged PR #1 at 13:53 | Start `date` 13:32:41; commits d6d0378, 9ccbd8b, PR #1 reviews 6011199598 / 6011207779 |
 | S-001 (cont.) | 2026-11-22 | 2, 3, 4, 5, 6 (interleaved) | 13:54 | 14:33 | 0 | 39 | PR #2 opened; CI/CodeQL/Dependabot added at owner request; RV2-01..06 fixed over three review rounds; owner merged PR #2 (~14:17). Notification Service built and tested; PR #7 opened, RV3-01..03 fixed, re-reviewed twice (REVIEW PASSED at 7d78b0d). React frontend + Nginx gateway built and verified (PR 4, local). Playwright E2E 5/5; fresh `down -v` → ready in 145s → E2E 5/5 with live Fake Store | PR #2 reviews 6011233839…6011294790; PR #7 reviews 6011373403…6011412047; CI runs on each PR |
-| S-001 (cont.) | 2026-11-22 | 6, 7 | 14:33 | 14:36 | 0 | 3 | Checkpoint at the owner's request ("note all this TIME_SPEND and AI_USAGE"): recorded owner directions, permission events, reviewer runtimes and this time log. PR #7 awaiting owner merge; PRs 4–5 ready locally | Commit on `test/e2e-docs` |
+| S-001 (cont.) | 2026-11-22 | 6, 7 | 14:33 | 14:43 | 0 | 10 | Checkpoint at the owner's request ("note all this TIME_SPEND and AI_USAGE"): recorded owner directions, permission events, reviewer runtimes and this time log; adopted the owner's time-accounting rule. PR #7 awaiting owner merge (time counted); PRs 4–5 ready locally | Commits on `test/e2e-docs` |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 
@@ -68,14 +70,14 @@ Add rows as required; do not leave placeholder rows in the final submitted recor
 | Time (IST) | Event | Effect on active time |
 |---|---|---|
 | ~13:44 | PR-strategy question and answers (ADR-017) | Included: implementation continued |
-| ~13:47–13:48 | Waiting for push approval after the auto-mode block | Included: under a minute |
+| ~13:47–13:48 | Waiting for push approval after the auto-mode block | Included |
 | 13:53 | Owner merged PR #1 | — |
 | ~14:17 | Owner merged PR #2 | — |
-| 14:33– | Waiting for the owner to merge PR #7 before opening PR 4 (sequential strategy) | Excluded from active time unless work continues |
+| 14:33– | Waiting for the owner to merge PR #7 before opening PR 4 (sequential strategy) | Included: the session is running, not paused |
 
 ### 4.2 AI tool runtime (diagnostic, overlapping)
 
-Reviewer subagent runs totalled about 28 minutes of wall time across 9 runs (see `AI_USAGE.md` §6). They ran **in parallel** with implementation, so they are not added to the active total.
+Reviewer subagent runs totalled about 28 minutes of wall time across 9 runs (see `AI_USAGE.md` §6). They ran **in parallel** within the session's wall clock, so they add nothing to the total.
 
 ## 5. Planning and Documentation Preparation
 
