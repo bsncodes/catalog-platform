@@ -4,6 +4,27 @@ A responsive product catalogue with product discovery, search, product details a
 
 > **Documentation status:** This README is the pre-implementation baseline. The architecture and API paths below are approved design, not proof that the application has already been built. Before submission, the implementation engineer must replace every `VERIFY AFTER IMPLEMENTATION` marker with the actual ports, commands, environment variables and test results, then test the setup from a clean checkout. Do not claim a feature or command is working until it has been run successfully.
 
+## Delivery status
+
+Implementation is delivered as sequential pull requests into `main` (see `DECISIONS.md`, ADR-017):
+
+| PR | Branch | Scope | Status |
+|---|---|---|---|
+| 1 | `chore/setup` | pnpm workspace, TypeScript/ESLint, shared contracts, PostgreSQL/ElasticMQ/Mailpit | In review |
+| 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback | Pending |
+| 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | Pending |
+| 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | Pending |
+| 5 | `test/e2e-docs` | End-to-end verification and final documentation | Pending |
+
+After PR 1 only the local infrastructure is runnable:
+
+```bash
+cp .env.example .env
+docker compose up -d          # postgres (healthy), elasticmq, mailpit (healthy)
+pnpm install
+pnpm typecheck && pnpm lint && pnpm test
+```
+
 ## Assessment scope
 
 The initial customer experience covers:
@@ -90,7 +111,7 @@ The required reviewer experience is a clean local run in under 10 minutes, witho
 - Docker with Docker Compose v2.
 - An internet connection if using Fake Store API as the active local product provider.
 
-Node.js and pnpm are needed only for host-based development or running workspace commands outside the containers. **VERIFY AFTER IMPLEMENTATION:** record the supported Node.js and pnpm versions from the repository's actual tool-version files and package configuration.
+Node.js and pnpm are needed only for host-based development or running workspace commands outside the containers: Node.js 22 or later (`engines` in `package.json`) and pnpm 10.17 (`packageManager` in `package.json`; `corepack enable` selects it).
 
 ### Start the application
 

@@ -62,6 +62,7 @@ Do not change an approved architectural decision merely because another technolo
 | ADR-014 | Keep email templates in Notification Service source code and abstract the email provider | ACCEPTED | ASM-011, ASM-012, ASM-013 |
 | ADR-015 | Use local service substitutes while keeping production integrations AWS-compatible | ACCEPTED | ASM-016, ASM-017 |
 | ADR-016 | Defer full AWS provisioning and non-essential product capabilities | ACCEPTED | ASM-024, ASM-026, ASM-027 |
+| ADR-017 | Deliver the implementation as sequential, reviewed PRs into `main` instead of one assessment PR | ACCEPTED (supersedes CLAUDE.md §21 single-PR rule) | — |
 
 ---
 
@@ -647,6 +648,33 @@ The original assessment rewards a small, well-reasoned solution and requires loc
 - The actual time spent and any scope reductions must be recorded.
 
 **Related assumptions:** ASM-024, ASM-026, ASM-027.
+
+---
+
+### ADR-017 — Sequential Pull Requests Instead of One Assessment PR
+
+**Status:** ACCEPTED — decided by the project owner on 2026-11-22 during the implementation session.
+
+**Context:** `CLAUDE.md` §21 and `PLAN.md` Phase 6 originally required one cohesive assessment PR. During implementation the project owner chose to split delivery into multiple PRs after the repository setup was complete.
+
+**Decision:** Deliver the work as five sequential PRs, each targeting `main` and each opened only after the previous one has been merged by the project owner:
+
+1. `chore/setup` — pnpm workspace, TypeScript/ESLint tooling, shared versioned contracts, local infrastructure (PostgreSQL, ElasticMQ, Mailpit), `.env.example`.
+2. `feat/catalog-service` — catalogue APIs, enquiry persistence, Transactional Outbox, internal notification-status callback.
+3. `feat/notification-service` — SQS consumer, delivery ledger, templates, email providers, durable callback retry and Circuit Breaker.
+4. `feat/frontend-gateway` — React application and the Nginx API Gateway.
+5. `test/e2e-docs` — Playwright end-to-end verification and final submission documentation.
+
+Each PR receives its own `pr-reviewer` subagent review, published on that PR. The implementation engineer never merges; merging is the project owner's action.
+
+**Rationale:** Smaller PRs give focused, reviewable diffs per service boundary and let review findings be fixed close to the code that introduced them.
+
+**Consequences:**
+
+- Each PR must be independently buildable and testable; Docker Compose grows one service per PR.
+- The end-to-end journey is only demonstrable once PRs 1–4 are merged; PR 5 provides the full-journey evidence.
+- Review evidence and time spent are recorded per PR.
+- The single-PR wording in `CLAUDE.md` §21/§23 is superseded by this decision for this assessment; the rest of the review workflow (independent reviewer, published verdict, fix-and-re-review) still applies.
 
 ---
 
