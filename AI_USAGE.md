@@ -41,7 +41,8 @@ The following project files provide instructions or context to AI tools and shou
 | `ASSUMPTIONS.md` | Records interpretations of ambiguity and their status | Present; update when implementation evidence confirms or invalidates an assumption. |
 | `DECISIONS.md` | Records architectural decisions, alternatives, rationale and consequences | Present; change only through deliberate decision/change control. |
 | `PLAN.md` | Implementation phases, time targets, dependencies and exit gates | Present; update actual phase status and deviations during execution. |
-| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Required path in `CLAUDE.md` and `PLAN.md`. Confirm that the file exists in the implementation repository and is committed before claiming the reviewer is configured. |
+| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 9 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
+| `.github/workflows/ci.yml`, `codeql.yml`, `.github/dependabot.yml` | Automated verification on every PR | Added in PR #2 at the owner's request; E2E job added in PR 5. |
 
 `README.md`, `TIME_SPENT.md`, `PR_DESCRIPTION.md` and the detailed `docs/` contracts are execution/submission records. Update them from the real implementation and measured results rather than treating the planning documents as evidence that the work has been completed.
 
@@ -79,7 +80,24 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 
 **Effect on the solution:** `SPEC.md` and `DECISIONS.md` separate the enquiry lifecycle from notification delivery/callback state and require durable callback recovery and idempotency.
 
-## 5. AI Errors, Human Review and Corrections
+### 4.6 Actual directions during the implementation session (2026-11-22, verbatim where quoted)
+
+| Time (IST) | Owner direction | AI response / effect |
+|---|---|---|
+| 13:32 | Session brief: *"Total time budget: 180 minutes from the actual session start … Follow `PLAN.md` … Do not force-push, merge, deploy, delete branches or publish changes to remote services without my explicit approval."* | Start time recorded from the system clock (13:32:41). Work ran autonomously; remote actions waited for approval. |
+| ~13:44 | *"but are we doing in 1 PR or several PR's are raised?"* | Answered: one PR, per `CLAUDE.md` §21. |
+| ~13:44 | *"no, lets break it and do it in multiple PR's after your setup is done"* | Asked two clarifying questions. The owner chose **"Sequential into main"** and **"Every PR"** reviewed. Recorded as ADR-017, which supersedes the single-PR rule. Work split into 5 PRs. |
+| ~13:48 | *"yes approved all your git commands go ahead"* | Given after Claude Code's auto-mode safety check blocked the first `git push`. Branches pushed and PRs opened. Merging was left to the owner, and force-pushes were avoided (a rebased branch was reset to its pushed tip instead). |
+| ~14:00 | *"can you setup and add all the relevant github CI/CD pipeline workflow actions in the PR2 only"* | Added CI (quality, integration with service containers, compose smoke), CodeQL and Dependabot to PR #2. CD to AWS was **not** automated: there is no AWS account or OIDC role, and the owner had asked for no deploys. Documented in the README. |
+| 14:33 | *"note all this TIME_SPEND and AI_USAGE"* | This section, the review/runtime records below and the `TIME_SPENT.md` checkpoint. |
+
+### 4.7 Tooling and permission events
+
+- **Auto-mode safety checks (Claude Code):** (1) a multi-heredoc shell command was blocked because the checker could not rule out a dangerous removal. Nothing was deleted; the files were rewritten with the Write tool. (2) `git commit && git push` was blocked as an outward action until the owner approved. The local commit was then made separately.
+- **Owner-only actions:** PRs #1 and #2 were merged by the owner, not the AI.
+- **Dependabot:** after CI landed, Dependabot opened #3 (Node 22 → 26 base image), #4–#6 (GitHub Actions major bumps). The AI did not merge or modify them. It recommended holding the untested Node 26 bump and left the decision to the owner.
+
+
 
 ### 5.1 Confirmed documentation-process correction
 
@@ -133,6 +151,22 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #7 | `7d78b0d` | REVIEW PASSED (6011412047) | — | — |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
+
+**Reviewer runtime (diagnostic only; overlaps implementation time, not added to `TIME_SPENT.md` totals):**
+
+| Review run | Reviewed SHA | Wall time | Tool calls |
+|---|---|---:|---:|
+| PR #1 initial | `d6d0378` | 127 s | 10 |
+| PR #1 re-review | `9ccbd8b` | 59 s | 5 |
+| PR #2 initial | `3937ed7` | 225 s | 19 |
+| PR #2 CI commit | `e7dcbdc` | 348 s (cumulative with the initial run) | 26 |
+| PR #2 re-review | `be5ee15` | 207 s | 10 |
+| PR #2 re-review | `03a53dd` | 122 s | 4 |
+| PR #7 initial | `39b2f71` | 268 s | 14 |
+| PR #7 re-review | `872100b` | 162 s | 5 |
+| PR #7 re-review | `7d78b0d` | 163 s | 3 |
+
+Every reviewer finding was validated by the implementer against the code before it was fixed. None was rejected, and one non-blocking observation was voluntarily implemented (`7d78b0d`). Re-reviews were run against the exact new head SHA each time.
 
 A reviewer subagent running in the same model family is an independent agent review, but it is not automatically an external cross-model review. Describe the review accurately.
 

@@ -1,7 +1,7 @@
 # Catalog Platform — Time Spent
 
 **Version:** 1.0  
-**Status:** Tracking template — actual execution time not yet recorded  
+**Status:** In progress — measured from 13:32:41 IST on 2026-11-22  
 **Project:** AI-Native Engineer Code Challenge  
 **Planning baseline:** 180 minutes (from `PLAN.md`)  
 **Tracking rule:** Record measured time only; never copy target time into the actual column.
@@ -35,19 +35,19 @@ Use active project time for the phase total and comparison with the 180-minute t
 
 ## 3. Phase-Level Summary
 
-The targets below are copied from the approved phase allocation in `PLAN.md`. Actual durations and variance are intentionally blank until measured.
+The targets below are copied from the approved phase allocation in `PLAN.md`. Phases ran **interleaved**, not sequentially: while each PR was under review, the next service was being built, and fixes were applied in parallel. Per-phase minutes therefore cannot be measured separately without inventing a split. Actual time is recorded per session in §4, and the total is reconciled at the end.
 
 | Phase | Activity | Target (min) | Actual (min) | Variance (min) | Status / evidence |
 |---|---|---:|---:|---:|---|
-| 0 | Planning and repository inspection | 15 | — | — | Not yet measured; record repository baseline and feature branch |
-| 1 | Repository and infrastructure setup | 15 | — | — | Not yet measured; link setup commits and local startup evidence |
-| 2 | Catalog Service | 35 | — | — | Not yet measured; link implementation commits and API tests |
-| 3 | Frontend | 35 | — | — | Not yet measured; link implementation commits and UI verification |
-| 4 | Enquiry and event processing | 35 | — | — | Not yet measured; link service commits and workflow/failure-path tests |
-| 5 | Testing and integration | 20 | — | — | Not yet measured; link exact test commands and results |
-| 6 | PR and independent review | 15 | — | — | Not yet measured; link PR, reviewer verdict and reviewed SHA |
-| 7 | Final corrections and documentation | 10 | — | — | Not yet measured; link final corrections and submission evidence |
-| | **Total** | **180** | **—** | **—** | **Calculate after all actual phase entries are recorded** |
+| 0 | Planning and repository inspection | 15 | Interleaved | — | See session log §4 |
+| 1 | Repository and infrastructure setup | 15 | Interleaved | — | See session log §4 |
+| 2 | Catalog Service | 35 | Interleaved | — | See session log §4 |
+| 3 | Frontend | 35 | Interleaved | — | See session log §4 |
+| 4 | Enquiry and event processing | 35 | Interleaved | — | See session log §4 |
+| 5 | Testing and integration | 20 | Interleaved | — | See session log §4 |
+| 6 | PR and independent review | 15 | Interleaved | — | See session log §4 |
+| 7 | Final corrections and documentation | 10 | Interleaved | — | See session log §4 |
+| | **Total so far (13:32–14:36)** | **180** | **64** | **−116 (in progress)** | **Final total reconciled at session end** |
 
 **Variance formula:** `Actual minutes − Target minutes`. A positive value is an overrun; a negative value is time saved. Do not report a total actual duration while any material execution time is untracked without clearly qualifying the total.
 
@@ -59,8 +59,23 @@ Add one row for each focused work session. Use additional rows when a phase span
 |---|---|---|---|---|---:|---:|---|---|
 | S-001 | 2026-11-22 | 0, 1, 2, 6 (interleaved) | 13:32 | 13:54 | 0 | 22 | Repository inspection; workspace + contracts + infra (PR 1); Catalog Service implementation and tests; PR strategy changed to sequential PRs (ADR-017, owner decision at ~13:44); PR #1 opened, reviewed (CHANGES REQUIRED, 2×P2 + 3×P3), fixed, re-reviewed (REVIEW PASSED); owner merged PR #1 at 13:53 | Start `date` 13:32:41; commits d6d0378, 9ccbd8b, PR #1 reviews 6011199598 / 6011207779 |
 | S-001 (cont.) | 2026-11-22 | 2, 3, 4, 5, 6 (interleaved) | 13:54 | 14:33 | 0 | 39 | PR #2 opened; CI/CodeQL/Dependabot added at owner request; RV2-01..06 fixed over three review rounds; owner merged PR #2 (~14:17). Notification Service built and tested; PR #7 opened, RV3-01..03 fixed, re-reviewed twice (REVIEW PASSED at 7d78b0d). React frontend + Nginx gateway built and verified (PR 4, local). Playwright E2E 5/5; fresh `down -v` → ready in 145s → E2E 5/5 with live Fake Store | PR #2 reviews 6011233839…6011294790; PR #7 reviews 6011373403…6011412047; CI runs on each PR |
+| S-001 (cont.) | 2026-11-22 | 6, 7 | 14:33 | 14:36 | 0 | 3 | Checkpoint at the owner's request ("note all this TIME_SPEND and AI_USAGE"): recorded owner directions, permission events, reviewer runtimes and this time log. PR #7 awaiting owner merge; PRs 4–5 ready locally | Commit on `test/e2e-docs` |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
+
+### 4.1 Owner interaction and waiting time
+
+| Time (IST) | Event | Effect on active time |
+|---|---|---|
+| ~13:44 | PR-strategy question and answers (ADR-017) | Included: implementation continued |
+| ~13:47–13:48 | Waiting for push approval after the auto-mode block | Included: under a minute |
+| 13:53 | Owner merged PR #1 | — |
+| ~14:17 | Owner merged PR #2 | — |
+| 14:33– | Waiting for the owner to merge PR #7 before opening PR 4 (sequential strategy) | Excluded from active time unless work continues |
+
+### 4.2 AI tool runtime (diagnostic, overlapping)
+
+Reviewer subagent runs totalled about 28 minutes of wall time across 9 runs (see `AI_USAGE.md` §6). They ran **in parallel** with implementation, so they are not added to the active total.
 
 ## 5. Planning and Documentation Preparation
 
@@ -76,7 +91,7 @@ Complete this section using actual timestamps and links.
 |---|---|---|
 | Repository inspection completed | 2026-11-22 13:33 | Feature branch created after reading CLAUDE/PLAN/contracts docs |
 | Feature branch created | 2026-11-22 13:33 (`feat/catalog-platform`); replaced by per-PR branches from 13:47 (ADR-017) | `git checkout -b` output |
-| Local environment starts successfully | 2026-11-22 ~13:51 infra + Catalog (no gateway yet) | `docker compose up -d --build catalog`: migrate applied, catalog healthy, featured 200, enquiry 202 + outbox published |
+| Local environment starts successfully | 2026-11-22 ~13:51 infra + Catalog; 14:31 full stack from `down -v` ready in 145 s | `docker compose up -d --build catalog`: migrate applied, catalog healthy, featured 200, enquiry 202 + outbox published |
 | Catalogue experience completed | 2026-11-22 ~14:20 (frontend + gateway verified locally) | RTL 14/14; gateway curls; E2E steps 1–4 |
 | Enquiry-to-email happy path verified | 2026-11-22 ~14:11 (backend), ~14:24 (browser E2E) | Enquiry → Mailpit → PROCESSED locally; Playwright journey |
 | Failure and retry paths verified | 2026-11-22 ~14:12 | Notification integration tests (email failure, DLQ, callback retry after restart, circuit breaker) |
