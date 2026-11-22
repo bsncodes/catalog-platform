@@ -1,6 +1,6 @@
 # Build context: repository root. Builds the React app and serves it from Nginx, which also
 # acts as the local API Gateway for /api/catalog.
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 RUN corepack enable
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
