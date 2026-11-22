@@ -62,6 +62,16 @@ services:
     restart: unless-stopped
     # No host ports: reached only through the gateway (public :3000) and by Notification Service (internal :3001).
 
+  # Single browser entry point: serves the React build and routes /api/catalog/* to Catalog Service.
+  gateway:
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    image: catalog-platform/gateway:local
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      catalog: { condition: service_healthy }
+    restart: unless-stopped
+
   notification-migrate:
     build: { context: ., dockerfile: services/notification/Dockerfile }
     image: catalog-platform/notification-service:local

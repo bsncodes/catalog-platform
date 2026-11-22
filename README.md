@@ -11,24 +11,19 @@ Implementation is delivered as sequential pull requests into `main` (see `DECISI
 | PR | Branch | Scope | Status |
 |---|---|---|---|
 | 1 | `chore/setup` | pnpm workspace, TypeScript/ESLint, shared contracts, PostgreSQL/ElasticMQ/Mailpit | Merged (#1) |
-| 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback, CI | In review |
-| 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | In review |
-| 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | Pending |
+| 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback, CI | Merged (#2) |
+| 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | In review (#7) |
+| 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | In review |
 | 5 | `test/e2e-docs` | End-to-end verification and final documentation | Pending |
 
-Current runnable state (after PR 2): infrastructure plus Catalog Service (no host port yet; the Gateway arrives in PR 4).
+Current runnable state (after PR 4): the complete application.
 
 ```bash
 cp .env.example .env
-docker compose up -d --build          # postgres, elasticmq, mailpit, catalog-migrate (one-shot), catalog
-docker compose ps                     # catalog becomes (healthy) after migrations; requires Docker Compose v2.20+
-pnpm install
-pnpm typecheck && pnpm lint && pnpm test   # unit/API tests, no external dependencies
-pnpm test:integration                      # needs the compose postgres + elasticmq running
-docker compose exec catalog wget -qO- http://127.0.0.1:3000/api/catalog/products/featured
+docker compose up --build      # first build takes a few minutes; then open http://localhost:8080
 ```
 
-Set `PRODUCT_PROVIDER=fixture` in `.env` to run fully offline against the committed product snapshot.
+Submit an enquiry from a product or category page, then open http://localhost:8025 to see the sales email; the enquiry moves to `PROCESSED` once Notification Service's callback is persisted. Set `PRODUCT_PROVIDER=fixture` in `.env` to run fully offline. Requires Docker Compose v2.20+.
 
 ## Assessment scope
 
@@ -133,9 +128,10 @@ docker compose up --build
 
 | Component | URL | Status |
 |---|---|---|
-| Catalogue web application | `VERIFY AFTER IMPLEMENTATION` | Record the actual host and port exposed by Docker Compose. |
-| Mailpit web interface | `VERIFY AFTER IMPLEMENTATION` | Record the actual host and port exposed by Docker Compose. |
-| Catalog Service health/readiness | `VERIFY AFTER IMPLEMENTATION` | Document only if intentionally exposed for local diagnostics. |
+| Catalogue web application + API Gateway | http://localhost:8080 | Nginx serves the React build and routes `/api/catalog/*` to Catalog Service (`GATEWAY_PORT`) |
+| Public API (through the Gateway) | http://localhost:8080/api/catalog/products/featured | Only `/api/catalog/*` is routed; `/internal/*`, `/health/*` and other `/api/*` return 404 |
+| Mailpit web interface (captured sales emails) | http://localhost:8025 | Bound to 127.0.0.1 only (`MAILPIT_UI_PORT`) |
+| Catalog / Notification health | not published | Container health checks only (`docker compose ps`) |
 
 The browser should use the same-origin API path `/api/catalog`; it should not need internal service hostnames or ports.
 

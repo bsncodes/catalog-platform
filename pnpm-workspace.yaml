@@ -4,3 +4,6 @@ packages:
   - "apps/*"
 onlyBuiltDependencies:
   - esbuild
+overrides:
+  # jsdom 27+ pulls undici 8, which fails to load on Node < 23.x patch releases; 26 is stable with Vitest 4.
+  jsdom: ^26.1.0
