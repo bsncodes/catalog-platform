@@ -71,7 +71,8 @@ export class SqsConsumer {
       { abortSignal: this.abort.signal },
     );
     const messages = response.Messages ?? [];
-    await Promise.all(messages.map((message) => this.processMessage(queueUrl, message)));
+    // allSettled: one message's failure must never abandon the others mid-flight (RV3-02).
+    await Promise.allSettled(messages.map((message) => this.processMessage(queueUrl, message)));
     return messages.length;
   }
 
@@ -104,7 +105,12 @@ export class SqsConsumer {
       return;
     }
     if (result.ack) {
-      await this.client.send(new DeleteMessageCommand({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle }));
+      try {
+        await this.client.send(new DeleteMessageCommand({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle }));
+      } catch (error) {
+        // Safe: the outcome is durable, so redelivery takes the idempotent DUPLICATE path.
+        this.logger.warn({ messageId: message.MessageId, outcome: result.outcome, err: error instanceof Error ? error.message : String(error), errorCategory: 'MESSAGING' }, 'delete failed; message will be redelivered and handled idempotently');
+      }
       return;
     }
     if (result.retryDelaySeconds !== undefined) {

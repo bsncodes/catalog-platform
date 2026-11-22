@@ -18,6 +18,8 @@ export type ProcessingResult = { ack: true; outcome: string } | { ack: false; ou
 export interface ProcessorOptions {
   emailFrom: string;
   emailLeaseMs: number;
+  /** Upper bound for one provider send, enforced here regardless of the provider's own timeouts. */
+  emailSendTimeoutMs: number;
   emailRetryBaseSeconds: number;
   maxReceiveCount: number;
 }
@@ -61,12 +63,15 @@ export class NotificationProcessor {
     let providerMessageId: string;
     try {
       const rendered = renderEnquiryEmail(event);
-      const result = await this.emailProvider.send({
-        ...rendered,
-        to: this.recipients.resolve(event.data.entity.type),
-        from: this.options.emailFrom,
-        replyTo: event.data.customer.email,
-      });
+      const result = await withTimeout(
+        this.emailProvider.send({
+          ...rendered,
+          to: this.recipients.resolve(event.data.entity.type),
+          from: this.options.emailFrom,
+          replyTo: event.data.customer.email,
+        }),
+        this.options.emailSendTimeoutMs,
+      );
       providerMessageId = result.providerMessageId;
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
@@ -108,4 +113,13 @@ export class NotificationProcessor {
     }
     return parsed.data;
   }
+}
+
+/** Rejects if the promise has not settled within ms (the underlying send cannot be cancelled; see ASM-034). */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(`Email provider did not respond within ${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }

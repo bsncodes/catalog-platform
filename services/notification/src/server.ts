@@ -1,12 +1,12 @@
 import { createServer } from 'node:http';
 import { SQSClient } from '@aws-sdk/client-sqs';
-import { SESv2Client } from '@aws-sdk/client-sesv2';
-import { loadConfig } from './config.js';
+import { emailLeaseMs, loadConfig } from './config.js';
 import { createLogger } from './logger.js';
 import { createPool } from './db/pool.js';
 import { DeliveryRepository } from './db/deliveryRepository.js';
 import { MailpitSmtpProvider } from './email/mailpitSmtpProvider.js';
 import { AwsSesProvider } from './email/awsSesProvider.js';
+import { createSesClient } from './email/sesClient.js';
 import { SalesRecipientResolver, type EmailProvider } from './email/provider.js';
 import { CircuitBreaker } from './callback/circuitBreaker.js';
 import { HttpCatalogClient } from './callback/catalogClient.js';
@@ -21,7 +21,7 @@ const pool = createPool(config.DATABASE_URL, (error) => logger.error({ err: erro
 const repository = new DeliveryRepository(pool);
 
 const emailProvider: EmailProvider =
-  config.EMAIL_PROVIDER === 'ses' ? new AwsSesProvider(new SESv2Client({ region: config.SES_REGION })) : new MailpitSmtpProvider({ host: config.SMTP_HOST, port: config.SMTP_PORT });
+  config.EMAIL_PROVIDER === 'ses' ? new AwsSesProvider(createSesClient({ region: config.SES_REGION, requestTimeoutMs: config.EMAIL_SEND_TIMEOUT_MS })) : new MailpitSmtpProvider({ host: config.SMTP_HOST, port: config.SMTP_PORT });
 const recipients = new SalesRecipientResolver({ PRODUCT: config.SALES_RECIPIENT_PRODUCT, CATEGORY: config.SALES_RECIPIENT_CATEGORY });
 
 const breaker = new CircuitBreaker({ failureThreshold: config.BREAKER_FAILURE_THRESHOLD, openDurationMs: config.BREAKER_OPEN_MS, halfOpenMaxProbes: config.BREAKER_HALF_OPEN_PROBES });
@@ -32,8 +32,9 @@ const worker = new CallbackRetryWorker(repository, callbacks, logger.child({ com
 
 const processor = new NotificationProcessor(repository, emailProvider, recipients, callbacks, logger.child({ component: 'processor' }), {
   emailFrom: config.EMAIL_FROM,
-  // Lease outlives one processing attempt but expires before the next SQS redelivery.
-  emailLeaseMs: Math.min(config.SQS_VISIBILITY_TIMEOUT_SECONDS * 1000, 60_000),
+  emailLeaseMs: emailLeaseMs(config),
+  // Provider-agnostic guard: a send that has not settled by then is treated as failed (2 SDK attempts).
+  emailSendTimeoutMs: config.EMAIL_SEND_TIMEOUT_MS * 2,
   emailRetryBaseSeconds: config.EMAIL_RETRY_BASE_SECONDS,
   maxReceiveCount: config.SQS_MAX_RECEIVE_COUNT,
 });

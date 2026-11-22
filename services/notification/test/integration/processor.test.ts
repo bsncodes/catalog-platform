@@ -3,7 +3,7 @@ import type pg from 'pg';
 import { CallbackRetryWorker } from '../../src/callback/callbackRetryWorker.js';
 import { CircuitBreaker } from '../../src/callback/circuitBreaker.js';
 import { resetTables, setupTestDatabase } from './db.js';
-import { build, FakeCatalog, FakeEmailProvider, ledger, makeEvent, silent } from './harness.js';
+import { build, FakeCatalog, FakeEmailProvider, HangingEmailProvider, ledger, makeEvent, silent } from './harness.js';
 
 let pool: pg.Pool;
 beforeAll(async () => {
@@ -72,6 +72,17 @@ describe('NotificationProcessor', () => {
     expect(result).toEqual({ ack: false, outcome: 'EMAIL_FAILED' });
     expect(catalog.calls).toHaveLength(0);
     expect((await ledger(pool, event.eventId)).email_status).toBe('FAILED');
+  });
+
+  it('a provider send that never settles ends as EMAIL_FAILED within the send timeout (RV3-01)', async () => {
+    const { processor, catalog } = build(pool, { email: new HangingEmailProvider(), emailSendTimeoutMs: 200 });
+    const event = makeEvent();
+    const started = Date.now();
+    const result = await processor.handle(msg(event));
+    expect(result).toMatchObject({ ack: false, outcome: 'EMAIL_FAILED' });
+    expect(Date.now() - started).toBeLessThan(3000);
+    expect(catalog.calls).toHaveLength(0);
+    expect(await ledger(pool, event.eventId)).toMatchObject({ email_status: 'FAILED', last_email_error: 'Email provider did not respond within 200ms' });
   });
 
   it('rejects an invalid event without acking (it will reach the DLQ)', async () => {

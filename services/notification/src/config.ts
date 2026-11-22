@@ -21,6 +21,7 @@ const configSchema = z
     SALES_RECIPIENT_PRODUCT: z.string().email(),
     SALES_RECIPIENT_CATEGORY: z.string().email(),
     EMAIL_RETRY_BASE_SECONDS: z.coerce.number().int().positive().default(5),
+    EMAIL_SEND_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
     CATALOG_INTERNAL_URL: z.string().url(),
     INTERNAL_API_TOKEN: z.string().min(16, 'INTERNAL_API_TOKEN must be at least 16 characters.'),
     CALLBACK_TIMEOUT_MS: z.coerce.number().int().positive().default(3000),
@@ -35,11 +36,28 @@ const configSchema = z
 
 export type NotificationConfig = z.infer<typeof configSchema>;
 
+/** Email lease used by the processor: outlives one attempt, expires before the next SQS redelivery. */
+export function emailLeaseMs(config: Pick<NotificationConfig, 'SQS_VISIBILITY_TIMEOUT_SECONDS'>): number {
+  return Math.min(config.SQS_VISIBILITY_TIMEOUT_SECONDS * 1000, 60_000);
+}
+
+/**
+ * The whole processing budget (bounded email send incl. one SDK retry + the immediate callback attempt)
+ * must finish inside the email lease, otherwise a redelivered copy could claim the lease and resend.
+ */
+function validateBudget(config: NotificationConfig): string | undefined {
+  const budget = config.EMAIL_SEND_TIMEOUT_MS * 2 + config.CALLBACK_TIMEOUT_MS + 5000;
+  const lease = emailLeaseMs(config);
+  return budget < lease ? undefined : `EMAIL_SEND_TIMEOUT_MS x 2 + CALLBACK_TIMEOUT_MS + 5s (${budget}ms) must be below the email lease (${lease}ms = min(SQS_VISIBILITY_TIMEOUT_SECONDS, 60s)).`;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): NotificationConfig {
   const result = configSchema.safeParse(env);
   if (!result.success) {
     const issues = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
     throw new Error(`Invalid Notification Service configuration: ${issues}`);
   }
+  const budgetError = validateBudget(result.data);
+  if (budgetError) throw new Error(`Invalid Notification Service configuration: ${budgetError}`);
   return result.data;
 }

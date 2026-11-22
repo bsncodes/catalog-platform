@@ -40,6 +40,13 @@ export class FakeEmailProvider implements EmailProvider {
   }
 }
 
+/** A provider whose send never settles (e.g. a hung SES connection). */
+export class HangingEmailProvider extends FakeEmailProvider {
+  override async send(): Promise<{ providerMessageId: string }> {
+    return new Promise(() => undefined);
+  }
+}
+
 /** Stands in for Catalog Service's internal API; can be switched to fail. */
 export class FakeCatalog implements CatalogClient {
   calls: Array<{ enquiryId: string; payload: NotificationStatusCallback }> = [];
@@ -52,7 +59,7 @@ export class FakeCatalog implements CatalogClient {
   }
 }
 
-export function build(pool: pg.Pool, opts: { email?: FakeEmailProvider; catalog?: FakeCatalog; breaker?: CircuitBreaker; maxAttempts?: number } = {}) {
+export function build(pool: pg.Pool, opts: { email?: FakeEmailProvider; catalog?: FakeCatalog; breaker?: CircuitBreaker; maxAttempts?: number; emailSendTimeoutMs?: number } = {}) {
   const repository = new DeliveryRepository(pool);
   const email = opts.email ?? new FakeEmailProvider();
   const catalog = opts.catalog ?? new FakeCatalog();
@@ -61,6 +68,7 @@ export function build(pool: pg.Pool, opts: { email?: FakeEmailProvider; catalog?
   const processor = new NotificationProcessor(repository, email, new SalesRecipientResolver({ PRODUCT: 'products@sales.test', CATEGORY: 'categories@sales.test' }), callbacks, silent, {
     emailFrom: 'catalog@notifications.test',
     emailLeaseMs: 30000,
+    emailSendTimeoutMs: opts.emailSendTimeoutMs ?? 5000,
     emailRetryBaseSeconds: 1,
     maxReceiveCount: 5,
   });
