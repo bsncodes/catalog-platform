@@ -99,9 +99,17 @@ describe('POST /api/catalog/enquiries', () => {
     expect(createEnquiry).not.toHaveBeenCalled();
   });
 
-  it('rejects a client-supplied recipient', async () => {
+  it('rejects a client-supplied recipient as a structural error (400)', async () => {
     const res = await request(buildApp().app).post('/api/catalog/enquiries').send({ ...validEnquiry, recipient: 'x@evil.test' });
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('returns 400 when entity is not an object, 422 when a required section is missing', async () => {
+    const { app } = buildApp();
+    expect((await request(app).post('/api/catalog/enquiries').send({ ...validEnquiry, entity: 'PRODUCT:1' })).status).toBe(400);
+    const { customer: _customer, ...noCustomer } = validEnquiry;
+    expect((await request(app).post('/api/catalog/enquiries').send(noCustomer)).status).toBe(422);
   });
 
   it('returns 400 for malformed JSON', async () => {

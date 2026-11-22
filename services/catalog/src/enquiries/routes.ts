@@ -10,6 +10,13 @@ function toDetails(error: ZodError): ErrorDetail[] {
   return error.issues.map((issue) => ({ field: issue.path.join('.') || '(body)', message: issue.message }));
 }
 
+/** Unknown keys, or a top-level `entity`/`customer` that is present but not an object. Missing fields stay 422. */
+function isStructuralIssue(issue: ZodError['issues'][number], body: Record<string, unknown>): boolean {
+  if (issue.code === 'unrecognized_keys') return true;
+  const [topLevel] = issue.path;
+  return issue.code === 'invalid_type' && issue.path.length === 1 && typeof topLevel === 'string' && body[topLevel] !== undefined;
+}
+
 export function publicEnquiryRoutes(enquiries: Pick<EnquiryService, 'createEnquiry'>, ratePerMinute: number): Router {
   const router = Router();
   const limiter = rateLimit({
@@ -27,7 +34,11 @@ export function publicEnquiryRoutes(enquiries: Pick<EnquiryService, 'createEnqui
       throw new AppError(400, 'MALFORMED_REQUEST', 'The request body must be a JSON object.');
     }
     const parsed = enquiryRequestSchema.safeParse(req.body);
-    if (!parsed.success) throw Errors.unprocessable('The enquiry contains invalid values.', toDetails(parsed.error));
+    if (!parsed.success) {
+      // 400: the request shape is wrong (unknown keys, entity/customer not objects). 422: field values invalid.
+      if (parsed.error.issues.some((issue) => isStructuralIssue(issue, req.body as Record<string, unknown>))) throw Errors.validation('The enquiry request is structurally invalid.', toDetails(parsed.error));
+      throw Errors.unprocessable('The enquiry contains invalid values.', toDetails(parsed.error));
+    }
 
     const created = await enquiries.createEnquiry(parsed.data, req.correlationId);
     req.log.info({ enquiryId: created.enquiryId, eventId: created.eventId, entityType: parsed.data.entity.type }, 'enquiry received');

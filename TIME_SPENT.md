@@ -75,7 +75,7 @@ Complete this section using actual timestamps and links.
 |---|---|---|
 | Repository inspection completed | 2026-11-22 13:33 | Feature branch created after reading CLAUDE/PLAN/contracts docs |
 | Feature branch created | 2026-11-22 13:33 (`feat/catalog-platform`); replaced by per-PR branches from 13:47 (ADR-017) | `git checkout -b` output |
-| Local environment starts successfully | Pending | Pending |
+| Local environment starts successfully | 2026-11-22 ~13:51 infra + Catalog (no gateway yet) | `docker compose up -d --build catalog`: migrate applied, catalog healthy, featured 200, enquiry 202 + outbox published |
 | Catalogue experience completed | Pending | Pending |
 | Enquiry-to-email happy path verified | Pending | Pending |
 | Failure and retry paths verified | Pending | Pending |

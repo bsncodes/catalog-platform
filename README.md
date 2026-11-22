@@ -20,7 +20,8 @@ Current runnable state (after PR 2): infrastructure plus Catalog Service (no hos
 
 ```bash
 cp .env.example .env
-docker compose up -d --build --wait   # postgres, elasticmq, mailpit, catalog-migrate (one-shot), catalog
+docker compose up -d --build          # postgres, elasticmq, mailpit, catalog-migrate (one-shot), catalog
+docker compose ps                     # catalog becomes (healthy) after migrations; requires Docker Compose v2.20+
 pnpm install
 pnpm typecheck && pnpm lint && pnpm test   # unit/API tests, no external dependencies
 pnpm test:integration                      # needs the compose postgres + elasticmq running

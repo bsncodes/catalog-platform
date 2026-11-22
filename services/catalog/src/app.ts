@@ -1,5 +1,6 @@
 import express, { type Express } from 'express';
 import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import type { Logger } from './logger.js';
 import type { Pool } from './db/pool.js';
 import type { CatalogService } from './products/catalogService.js';
@@ -29,7 +30,9 @@ export function createPublicApp(deps: AppDependencies): Express {
   app.get('/health/live', (_req, res) => {
     res.json({ status: 'ok' });
   });
-  app.get('/health/ready', async (_req, res) => {
+  // Probes are private (not routed by the Gateway); the limit is defence in depth for a DB-touching route.
+  const probeLimiter = rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-7', legacyHeaders: false });
+  app.get('/health/ready', probeLimiter, async (_req, res) => {
     try {
       await deps.pool.query('SELECT 1');
       res.json({ status: 'ready' });

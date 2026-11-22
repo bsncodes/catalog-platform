@@ -23,12 +23,18 @@ const provider: ProductProvider =
     ? FixtureProductProvider.fromFile(join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'products.json'), config.PRODUCT_CURRENCY)
     : new FakeStoreProvider({ baseUrl: config.FAKESTORE_BASE_URL, timeoutMs: config.PROVIDER_TIMEOUT_MS, currency: config.PRODUCT_CURRENCY });
 
-const pool = createPool(config.DATABASE_URL);
+const pool = createPool(config.DATABASE_URL, (error) => logger.error({ err: error.message, errorCategory: 'DATABASE' }, 'idle database connection error'));
 const catalog = new CatalogService(provider, config.FEATURED_PRODUCT_IDS);
 const enquiries = new EnquiryService(pool, catalog);
 
 // With a custom endpoint (ElasticMQ locally) route calls to that endpoint rather than the host in the queue URL.
-const sqs = new SQSClient({ region: config.SQS_REGION, ...(config.SQS_ENDPOINT ? { endpoint: config.SQS_ENDPOINT, useQueueUrlAsEndpoint: false } : {}) });
+const sqs = new SQSClient({
+  region: config.SQS_REGION,
+  // Bounded calls: a hung SendMessage must fail (and be retried) rather than stall the outbox loop.
+  requestHandler: { connectionTimeout: 2000, requestTimeout: config.SQS_REQUEST_TIMEOUT_MS },
+  maxAttempts: 3,
+  ...(config.SQS_ENDPOINT ? { endpoint: config.SQS_ENDPOINT, useQueueUrlAsEndpoint: false } : {}),
+});
 const sqsPublisher = new SqsEventPublisher(sqs, config.SQS_QUEUE_NAME);
 const outbox = new OutboxPublisher(new OutboxRepository(pool), sqsPublisher, logger.child({ component: 'outbox' }), {
   pollIntervalMs: config.OUTBOX_POLL_INTERVAL_MS,

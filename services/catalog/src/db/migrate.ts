@@ -10,7 +10,7 @@ if (!url) {
   process.exit(1);
 }
 const directory = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'migrations');
-const pool = createPool(url);
+const pool = createPool(url, (error) => console.error('idle database connection error', error.message));
 try {
   const applied = await runMigrations(pool, directory);
   console.log(applied.length ? `catalog migrations complete (${applied.length} applied)` : 'catalog schema up to date');

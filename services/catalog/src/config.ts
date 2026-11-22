@@ -23,12 +23,21 @@ const configSchema = z.object({
   SQS_QUEUE_NAME: z.string().min(1).default('catalog-enquiry-events'),
   OUTBOX_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(1000),
   OUTBOX_BATCH_SIZE: z.coerce.number().int().min(1).max(10).default(10),
-  OUTBOX_CLAIM_LEASE_MS: z.coerce.number().int().positive().default(30000),
+  OUTBOX_CLAIM_LEASE_MS: z.coerce.number().int().positive().default(180000),
+  SQS_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
   ENQUIRY_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(10),
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(1),
 });
 
 export type CatalogConfig = z.infer<typeof configSchema>;
+
+/** Lease must outlive a full batch of bounded SQS sends so a live publisher never loses its claim. */
+function validateLease(config: CatalogConfig): string | undefined {
+  const worstCaseBatchMs = config.OUTBOX_BATCH_SIZE * config.SQS_REQUEST_TIMEOUT_MS * 3;
+  return config.OUTBOX_CLAIM_LEASE_MS > worstCaseBatchMs
+    ? undefined
+    : `OUTBOX_CLAIM_LEASE_MS (${config.OUTBOX_CLAIM_LEASE_MS}) must exceed OUTBOX_BATCH_SIZE x SQS_REQUEST_TIMEOUT_MS x 3 (${worstCaseBatchMs}).`;
+}
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): CatalogConfig {
   const result = configSchema.safeParse(env);
@@ -36,5 +45,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): CatalogConfig 
     const issues = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
     throw new Error(`Invalid Catalog Service configuration: ${issues}`);
   }
+  const leaseError = validateLease(result.data);
+  if (leaseError) throw new Error(`Invalid Catalog Service configuration: ${leaseError}`);
   return result.data;
 }

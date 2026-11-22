@@ -59,6 +59,7 @@ services:
     depends_on:
       catalog-migrate: { condition: service_completed_successfully }
       elasticmq: { condition: service_started }
+    restart: unless-stopped
     # No host ports: reached only through the gateway (public :3000) and by Notification Service (internal :3001).
 
   mailpit:

@@ -48,10 +48,13 @@ export class OutboxPublisher {
     tick();
   }
 
-  async stop(): Promise<void> {
+  /** Stops polling and waits for the in-flight batch, but never longer than timeoutMs. */
+  async stop(timeoutMs = 10_000): Promise<void> {
     this.stopped = true;
     if (this.timer) clearTimeout(this.timer);
-    await this.running;
+    let timeout: NodeJS.Timeout | undefined;
+    await Promise.race([this.running, new Promise<void>((resolve) => (timeout = setTimeout(resolve, timeoutMs)))]);
+    if (timeout) clearTimeout(timeout);
   }
 
   /** Publishes one batch. Returns the number of events published successfully. */
