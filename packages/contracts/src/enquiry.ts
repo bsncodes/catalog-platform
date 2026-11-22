@@ -8,16 +8,16 @@ export const ENQUIRY_ENTITY_TYPES = ['PRODUCT', 'CATEGORY'] as const;
 export type EnquiryEntityType = (typeof ENQUIRY_ENTITY_TYPES)[number];
 
 export const ENQUIRY_LIMITS = {
-  nameMax: 100,
+  nameMax: 120,
   emailMax: 254,
   phoneMin: 7,
-  phoneMax: 20,
+  phoneMax: 32,
   messageMax: 2000,
-  entityIdMax: 100,
+  entityIdMax: 128,
 } as const;
 
 /** Digits with optional leading +, spaces, dashes, dots and parentheses; 7-15 digits overall. */
-const PHONE_PATTERN = /^\+?[0-9\s().-]{7,20}$/;
+const PHONE_PATTERN = /^\+?[0-9\s().-]+$/;
 
 export const phoneSchema = z
   .string()

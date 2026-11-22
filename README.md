@@ -151,6 +151,8 @@ docker compose logs -f
 
 To delete local database/queue volumes and reset local state, use `docker compose down -v`. **This is destructive:** it removes persisted local development data.
 
+Database roles and passwords are created only when the PostgreSQL volume is first initialised. If you change `CATALOG_DB_PASSWORD` or `NOTIFICATION_DB_PASSWORD` in `.env` afterwards, run `docker compose down -v` to re-initialise local data.
+
 ## Configuration
 
 `.env.example` is the committed reference for local configuration. Copy it to `.env` and provide only local values. Never commit `.env`, passwords, tokens, API keys, production credentials or other secrets.

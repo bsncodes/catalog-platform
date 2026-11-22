@@ -16,7 +16,9 @@ services:
     ports:
       - "127.0.0.1:${POSTGRES_HOST_PORT:-55432}:5432"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      # TCP checks against the service databases: only pass once the init script has created
+      # both roles/databases (the first-boot temporary server listens on the Unix socket only).
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U catalog_svc -d catalog && pg_isready -h 127.0.0.1 -U notification_svc -d notification"]
       interval: 3s
       timeout: 3s
       retries: 20
@@ -31,7 +33,8 @@ services:
   mailpit:
     image: axllent/mailpit:v1.27
     ports:
-      - "${MAILPIT_UI_PORT:-8025}:8025"
+      # Loopback only: captured emails contain customer contact details.
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
     healthcheck:
       test: ["CMD", "/mailpit", "readyz"]
       interval: 3s

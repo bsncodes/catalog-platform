@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ENQUIRY_ENTITY_TYPES } from './enquiry.js';
+import { ENQUIRY_ENTITY_TYPES, ENQUIRY_LIMITS, phoneSchema } from './enquiry.js';
 
 export const CATALOG_ENQUIRY_SUBMITTED = 'CATALOG_ENQUIRY_SUBMITTED' as const;
 
@@ -14,15 +14,15 @@ export const catalogEnquirySubmittedV1Schema = z.object({
     enquiryId: z.string().uuid(),
     entity: z.object({
       type: z.enum(ENQUIRY_ENTITY_TYPES),
-      id: z.string().min(1),
-      name: z.string().min(1),
+      id: z.string().trim().min(1).max(ENQUIRY_LIMITS.entityIdMax),
+      name: z.string().trim().min(1).max(500),
     }),
     customer: z.object({
-      name: z.string().min(1),
-      email: z.string().email(),
-      phone: z.string().min(1),
+      name: z.string().trim().min(1).max(ENQUIRY_LIMITS.nameMax),
+      email: z.string().trim().max(ENQUIRY_LIMITS.emailMax).email(),
+      phone: phoneSchema,
     }),
-    message: z.string().optional(),
+    message: z.string().trim().min(1).max(ENQUIRY_LIMITS.messageMax).optional(),
   }),
 });
 
@@ -33,7 +33,7 @@ export const notificationStatusCallbackSchema = z
   .object({
     eventId: z.string().uuid(),
     notificationStatus: z.literal('SENT'),
-    providerMessageId: z.string().min(1).max(512),
+    providerMessageId: z.string().trim().min(1).max(256),
     processedAt: z.string().datetime({ offset: true }),
   })
   .strict();
