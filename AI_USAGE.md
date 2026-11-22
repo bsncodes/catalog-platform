@@ -41,7 +41,7 @@ The following project files provide instructions or context to AI tools and shou
 | `ASSUMPTIONS.md` | Records interpretations of ambiguity and their status | Present; update when implementation evidence confirms or invalidates an assumption. |
 | `DECISIONS.md` | Records architectural decisions, alternatives, rationale and consequences | Present; change only through deliberate decision/change control. |
 | `PLAN.md` | Implementation phases, time targets, dependencies and exit gates | Present; update actual phase status and deviations during execution. |
-| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 14+ review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
+| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 16 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
 | `.github/workflows/ci.yml`, `codeql.yml`, `.github/dependabot.yml` | Automated verification on every PR | Added in PR #2 at the owner's request; E2E job added in PR 5. |
 
 `README.md`, `TIME_SPENT.md`, `PR_DESCRIPTION.md` and the detailed `docs/` contracts are execution/submission records. Update them from the real implementation and measured results rather than treating the planning documents as evidence that the work has been completed.
@@ -97,6 +97,8 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 | 15:48 | *"I will manually review it, and fix the open issues and finally log this session and let me know"* | The model had been switched to Claude Sonnet 5; only a status check ran before the owner switched back. |
 | 21:01 | *"resume the session now"* (model: Claude Opus 5.5) | S-003: RV6-02/RV6-03 fixed on PR #13, gates + E2E re-run, session logged and closed at 21:03:49. The owner reviews #13 manually. |
 | 21:31 | *"pr-reviewer on this PR"* | S-004: reviewer run on PR #13 (6013178058): docs-only CHANGES REQUIRED; RV7-01/RV7-02 fixed, optional 429 no-store assertion added; session closed at 21:35:57. |
+| 21:38 | *"is review initiated as per the PR instructions?"* | Answered honestly: the head `80f35ed` had no verdict, so §23 wasn't fully met. I offered a re-review instead of running it. |
+| 21:40 | *"yes, you have to do it automatically why are u asking me agiain"* | Re-review started immediately (S-005). REVIEW PASSED (6013202469). Saved a standing rule to memory: re-review automatically after every fix and never ask. |
 
 ### 4.7 Tooling and permission events
 
@@ -169,7 +171,8 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #12 submission | `22953d2` | CHANGES REQUIRED (6011496306), documentation only: no P0/P1, no code defects | RV5-01..04 P2 (time log not reconciled, a misstated review record, stale README text, missing next-steps section); RV5-05/06 P3; remaining risk: gateway 502 reported as "not sent" | Fixed in the following commit on #12; see that PR for the re-review |
 | #12 | `6fc219b` | **REVIEW PASSED** (6011518525): RV5-01..06 and the 502 risk resolved; no P0/P1/P2 | Non-blocking: PR #1 open-time precision; JSON error responses lack nosniff/CSP (cosmetic) | Closing docs commit (time row and these outcome rows only, disclosed in advance) |
 | #12 (post-merge) | `6d89558` (status API, pushed after #12 merged) | CHANGES REQUIRED (6011622896): **no code defects** in the API; RV6-01 P1 delivery gap (#12 already merged), RV6-02 P2 stale PR-status docs, RV6-03 P3 (no-store only on 200, write-wording 503, no 503 test) | Privacy, enumeration, service boundary and OpenAPI consistency verified (`$ref`s resolve via js-yaml) | RV6-01: PR #13; RV6-02/03 fixed on #13 in session S-003 |
-| #13 submission | `99ed537` | CHANGES REQUIRED (6013178058), **docs only, no code defects**; RV6-01..03 verified resolved; CI 6/6 | RV7-01 P2: PR #13 title/description on GitHub stale; RV7-02 P3: TIME_SPENT wall-clock row said "no pauses" | Fixed in S-004 (GitHub PR edited; TIME_SPENT row). No further re-review requested; the owner reviews #13 manually |
+| #13 submission | `99ed537` | CHANGES REQUIRED (6013178058), **docs only, no code defects**; RV6-01..03 verified resolved; CI 6/6 | RV7-01 P2: PR #13 title/description on GitHub stale; RV7-02 P3: TIME_SPENT wall-clock row said "no pauses" | Fixed in S-004 (GitHub PR edited; TIME_SPENT row) |
+| #13 | `80f35ed` | **REVIEW PASSED** (6013202469): RV7-01/02 resolved, no findings, CI 6/6 | Non-blocking: inconsistent minute rounding (rule now stated); stale "no further re-review" row (fixed) | — |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 
@@ -192,6 +195,7 @@ Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.m
 | PR #12 focused re-review | `6fc219b` | not reported separately | — |
 | Status API review (posted on #12) | `6d89558` | 144 s | 12 |
 | PR #13 review | `99ed537` | 209 s | 22 |
+| PR #13 focused re-review | `80f35ed` | ~90 s | — |
 
 Every reviewer finding was validated by the implementer against the code before it was fixed. None was rejected, and one non-blocking observation was voluntarily implemented (`7d78b0d`). Re-reviews were run against the exact new head SHA each time.
 
