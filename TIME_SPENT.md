@@ -1,7 +1,7 @@
 # Catalog Platform — Time Spent
 
 **Version:** 1.0  
-**Status:** **Closed at 21:03:49 IST.** S-001 13:32:41–15:08:17 (95 min) + S-002 15:30:27–15:36:29 (6 min) + S-003 21:01:11–21:03:49 (3 min) = **104 min**. Pauses (15:08–15:30, 15:36–21:01) are not counted. A one-command status check at 15:48:57 during the pause did no project work and is not counted.
+**Status:** **Closed at 21:35:57 IST.** S-001 13:32:41–15:08:17 (95 min) + S-002 15:30:27–15:36:29 (6 min) + S-003 21:01:11–21:03:49 (3 min) + S-004 21:31:43–21:35:57 (5 min) = **109 min**. Pauses (15:08–15:30, 15:36–21:01, 21:03–21:31) are not counted. A one-command status check at 15:48:57 during a pause did no project work and is not counted.
 **Project:** AI-Native Engineer Code Challenge  
 **Planning baseline:** 180 minutes (from `PLAN.md`)  
 **Tracking rule:** Record measured time only; never copy target time into the actual column.
@@ -47,7 +47,7 @@ The targets below are copied from the approved phase allocation in `PLAN.md`. Ph
 | 5 | Testing and integration | 20 | Interleaved | — | See session log §4 |
 | 6 | PR and independent review | 15 | Interleaved | — | See session log §4 |
 | 7 | Final corrections and documentation | 10 | Interleaved | — | See session log §4 |
-| | **Total (S-001 + S-002 + S-003, pauses excluded)** | **180** | **104** | **-76** | **Within the 180-minute cap** |
+| | **Total (S-001…S-004, pauses excluded)** | **180** | **109** | **-71** | **Within the 180-minute cap** |
 
 **Variance formula:** `Actual minutes − Target minutes`. A positive value is an overrun; a negative value is time saved. Do not report a total actual duration while any material execution time is untracked without clearly qualifying the total.
 
@@ -66,6 +66,7 @@ Add one row for each focused work session. Use additional rows when a phase span
 | S-001 (close) | 2026-11-22 | 6, 7 | 15:01 | 15:08 | 0 | 7 | Final focused re-review of #12 at `6fc219b`: REVIEW PASSED (6011518525), CI 6/6 green incl. E2E; closing docs commit (15:05:48); final summary to the owner; **clock paused at 15:08:17 on the owner's instruction** ("pause the timespent"). #12 left open for submission | PR #12 review 6011518525 |
 | S-002 | 2026-11-22 | 2, 5, 6 | 15:30:27 | 15:36:29 | 0 | 6 | Resumed at the owner's request: build an enquiry status API. `GET /api/catalog/enquiries/{enquiryId}` (PII-free lifecycle view), unit + integration + E2E + CI smoke coverage, contract docs (ASM-035, ADR-019); PR #12 had been merged by the owner before the status-API commit was pushed, so it ships in a new PR. **Session paused at 15:36:29 on the owner's instruction (reason given: token limit reached)**; the focused review of the status API was still running and its outcome is not recorded here | PR #12 commits after `b4e86af` |
 | S-003 | 2026-11-22 | 6, 7 | 21:01:11 | 21:03:49 | 0 | 3 | Resumed at the owner's instruction ("resume the session now") to fix the open status-API review findings on PR #13. RV6-03: `Cache-Control: no-store` on every status response (verified live on 404/400), read-specific 503 message, 503 tests (catalog unit 50). RV6-02: PR-status facts corrected (#12 merged at `b4e86af`, #13 is the open submission PR), ASM-035 CI evidence, AI mistake #14 (repeated merge/push race). Gates and E2E 5/5 re-run. Owner is reviewing #13 manually, so no reviewer subagent was run. Session closed | PR #13 commits after `2338924` |
+| S-004 | 2026-11-22 | 6, 7 | 21:31:43 | 21:35:57 | 0 | 5 | Owner asked for a `pr-reviewer` run on PR #13. Review 6013178058 on `99ed537`: CHANGES REQUIRED, docs only (no code defects); RV6-01..03 confirmed resolved; CI 6/6; all suites + E2E 5/5. Fixed RV7-01 (PR #13 title/description on GitHub updated) and RV7-02 (wall-clock row), plus the optional 429 no-store assertion. Session closed | PR #13 review 6013178058; commit after `99ed537` |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 
@@ -110,10 +111,10 @@ Complete this section using actual timestamps and links.
 
 | Metric | Actual result |
 |---|---|
-| Total active project time | **104 minutes**: S-001 95 + S-002 6 + S-003 3 (paused 15:08–15:30 and 15:36–21:01) |
-| Total wall-clock span | Same: one continuous session with no pauses (owner's rule, §4) |
-| Total breaks / unrelated interruptions | Two owner pauses (15:08:17–15:30:27, 15:36:29–21:01:11), excluded from the total |
-| Difference from 180-minute target | -76 minutes (under target) |
+| Total active project time | **109 minutes**: S-001 95 + S-002 6 + S-003 3 + S-004 5 |
+| Total wall-clock span | 13:32:41–session close across S-001…S-004; only the in-session time is counted. Owner pauses (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43) are excluded (owner's rule, §4) |
+| Total breaks / unrelated interruptions | Three owner pauses (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43), excluded from the total |
+| Difference from 180-minute target | -71 minutes (under target) |
 | Phases completed within target | Phases ran interleaved; the whole plan finished inside the 180-minute cap |
 | Main causes of savings | Parallel work: the next service was built while each PR was under review. Shared contracts removed rework. Each reviewer finding was fixed while it was still small. |
 | Work deferred or left incomplete | No functional requirement incomplete. Deferred by design: CD to AWS, CloudWatch alarms, authenticated `RESOLVED` workflow, product cache, permanent-vs-transient email error classification (`DECISIONS.md` §9, README limitations) |

@@ -96,6 +96,7 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 | 15:36 | *"raise PR and pause the session, stating that tokens limit reached and give me the PR link"* | PR #12 had already been merged before the status-API commit landed, so a new PR carries it. Session paused; the in-flight review of this change is recorded as incomplete. |
 | 15:48 | *"I will manually review it, and fix the open issues and finally log this session and let me know"* | The model had been switched to Claude Sonnet 5; only a status check ran before the owner switched back. |
 | 21:01 | *"resume the session now"* (model: Claude Opus 5.5) | S-003: RV6-02/RV6-03 fixed on PR #13, gates + E2E re-run, session logged and closed at 21:03:49. The owner reviews #13 manually. |
+| 21:31 | *"pr-reviewer on this PR"* | S-004: reviewer run on PR #13 (6013178058): docs-only CHANGES REQUIRED; RV7-01/RV7-02 fixed, optional 429 no-store assertion added; session closed at 21:35:57. |
 
 ### 4.7 Tooling and permission events
 
@@ -168,6 +169,7 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #12 submission | `22953d2` | CHANGES REQUIRED (6011496306), documentation only: no P0/P1, no code defects | RV5-01..04 P2 (time log not reconciled, a misstated review record, stale README text, missing next-steps section); RV5-05/06 P3; remaining risk: gateway 502 reported as "not sent" | Fixed in the following commit on #12; see that PR for the re-review |
 | #12 | `6fc219b` | **REVIEW PASSED** (6011518525): RV5-01..06 and the 502 risk resolved; no P0/P1/P2 | Non-blocking: PR #1 open-time precision; JSON error responses lack nosniff/CSP (cosmetic) | Closing docs commit (time row and these outcome rows only, disclosed in advance) |
 | #12 (post-merge) | `6d89558` (status API, pushed after #12 merged) | CHANGES REQUIRED (6011622896): **no code defects** in the API; RV6-01 P1 delivery gap (#12 already merged), RV6-02 P2 stale PR-status docs, RV6-03 P3 (no-store only on 200, write-wording 503, no 503 test) | Privacy, enumeration, service boundary and OpenAPI consistency verified (`$ref`s resolve via js-yaml) | RV6-01: PR #13; RV6-02/03 fixed on #13 in session S-003 |
+| #13 submission | `99ed537` | CHANGES REQUIRED (6013178058), **docs only, no code defects**; RV6-01..03 verified resolved; CI 6/6 | RV7-01 P2: PR #13 title/description on GitHub stale; RV7-02 P3: TIME_SPENT wall-clock row said "no pauses" | Fixed in S-004 (GitHub PR edited; TIME_SPENT row). No further re-review requested; the owner reviews #13 manually |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 
@@ -189,6 +191,7 @@ Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.m
 | PR #12 final submission review | `22953d2` | 311 s | 29 |
 | PR #12 focused re-review | `6fc219b` | not reported separately | — |
 | Status API review (posted on #12) | `6d89558` | 144 s | 12 |
+| PR #13 review | `99ed537` | 209 s | 22 |
 
 Every reviewer finding was validated by the implementer against the code before it was fixed. None was rejected, and one non-blocking observation was voluntarily implemented (`7d78b0d`). Re-reviews were run against the exact new head SHA each time.
 

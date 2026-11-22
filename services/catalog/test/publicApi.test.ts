@@ -161,8 +161,13 @@ describe('GET /api/catalog/enquiries/:enquiryId (status)', () => {
   it('is rate limited', async () => {
     const { app } = buildApp();
     const statuses: number[] = [];
-    for (let i = 0; i < 61; i += 1) statuses.push((await request(app).get(`/api/catalog/enquiries/${STATUS_ID}`)).status);
+    let last: request.Response | undefined;
+    for (let i = 0; i < 61; i += 1) {
+      last = await request(app).get(`/api/catalog/enquiries/${STATUS_ID}`);
+      statuses.push(last.status);
+    }
     expect(statuses.at(-1)).toBe(429);
+    expect(last?.headers['cache-control']).toBe('no-store');
   });
 });
 
