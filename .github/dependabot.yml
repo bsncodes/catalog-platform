@@ -22,3 +22,7 @@ updates:
     directory: /services/notification
     schedule:
       interval: weekly
+  - package-ecosystem: docker
+    directory: /apps/web
+    schedule:
+      interval: weekly

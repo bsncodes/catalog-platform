@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6 # version comes from package.json "packageManager"
       - uses: actions/setup-node@v7
         with:
@@ -52,7 +52,7 @@ jobs:
       TEST_ADMIN_DATABASE_URL: postgres://postgres:ci-admin-password@127.0.0.1:5432/postgres
       TEST_SQS_ENDPOINT: http://127.0.0.1:9324
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -82,12 +82,13 @@ jobs:
           sed -i 's/^PRODUCT_PROVIDER=.*/PRODUCT_PROVIDER=fixture/' .env
       - name: Build and start the stack
         run: docker compose up -d --build
-      - name: Wait for Catalog and Notification services to become healthy
+      - name: Wait for Catalog, Notification and Gateway to become healthy
         run: |
           for _ in $(seq 1 60); do
             catalog=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q catalog)" 2>/dev/null || true)
             notification=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q notification)" 2>/dev/null || true)
-            [ "$catalog" = "healthy" ] && [ "$notification" = "healthy" ] && exit 0
+            gateway=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q gateway)" 2>/dev/null || true)
+            [ "$catalog" = "healthy" ] && [ "$notification" = "healthy" ] && [ "$gateway" = "healthy" ] && exit 0
             sleep 2
           done
           docker compose ps
@@ -99,6 +100,12 @@ jobs:
           api() { docker compose exec -T catalog wget -qO- "$@"; }
           test "$(api http://127.0.0.1:3000/api/catalog/products/featured | jq '.data.products | length')" = "5"
           test "$(api "http://127.0.0.1:3000/api/catalog/categories/jewelery/products" | jq '.data.topRated | length')" -ge 1
+          # Through the Gateway: SPA shell, public API, and non-routed private paths.
+          curl -sf http://127.0.0.1:8080/ | grep -q '<div id="root">'
+          curl -sf http://127.0.0.1:8080/products/3 | grep -q '<div id="root">'
+          test "$(curl -sf http://127.0.0.1:8080/api/catalog/products/featured | jq '.data.products | length')" = "5"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/health/ready)" = "404"
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X PATCH http://127.0.0.1:8080/internal/catalog/enquiries/x/notification-status)" = "404"
           response=$(api --header 'Content-Type: application/json' \
             --post-data '{"entity":{"type":"PRODUCT","id":"3"},"customer":{"name":"CI Smoke","email":"ci@example.com","phone":"+919876543210"}}' \
             http://127.0.0.1:3000/api/catalog/enquiries)

@@ -1,0 +1,117 @@
+import { useState, type FormEvent, type ReactElement } from 'react';
+import { enquiryRequestSchema, ENQUIRY_LIMITS, type EnquiryEntityType } from '@catalog/contracts';
+import { api, ApiError } from '../api/client';
+
+interface Props {
+  entityType: EnquiryEntityType;
+  entityId: string;
+  entityName: string;
+}
+
+type Field = 'name' | 'email' | 'phone' | 'message';
+type FieldErrors = Partial<Record<Field, string>>;
+type Status = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'success'; enquiryId: string } | { kind: 'error'; message: string };
+
+const FIELD_FOR_PATH: Record<string, Field> = { 'customer.name': 'name', 'customer.email': 'email', 'customer.phone': 'phone', message: 'message' };
+
+/** Product or category enquiry. Validates with the same shared schema the Catalog Service uses. */
+export function EnquiryForm({ entityType, entityId, entityName }: Props) {
+  const [values, setValues] = useState<Record<Field, string>>({ name: '', email: '', phone: '', message: '' });
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [status, setStatus] = useState<Status>({ kind: 'idle' });
+
+  const toFieldErrors = (issues: Array<{ field: string; message: string }>): FieldErrors => {
+    const result: FieldErrors = {};
+    for (const issue of issues) {
+      const field = FIELD_FOR_PATH[issue.field];
+      if (field && !result[field]) result[field] = issue.message;
+    }
+    return result;
+  };
+
+  const onSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    const payload = {
+      entity: { type: entityType, id: entityId },
+      customer: { name: values.name, email: values.email, phone: values.phone },
+      ...(values.message.trim() ? { message: values.message } : {}),
+    };
+    const parsed = enquiryRequestSchema.safeParse(payload);
+    if (!parsed.success) {
+      setErrors(toFieldErrors(parsed.error.issues.map((i) => ({ field: i.path.join('.'), message: i.message }))));
+      return;
+    }
+    setErrors({});
+    setStatus({ kind: 'submitting' });
+    try {
+      const accepted = await api.submitEnquiry(payload);
+      setStatus({ kind: 'success', enquiryId: accepted.enquiryId });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 422 && error.code === 'VALIDATION_ERROR') {
+        setErrors(toFieldErrors(error.details));
+        setStatus({ kind: 'idle' });
+        return;
+      }
+      const message =
+        error instanceof ApiError && error.status === 429
+          ? 'You have sent several enquiries in a short time. Please wait a minute and try again.'
+          : error instanceof Error
+            ? `Your enquiry was not sent. ${error.message}`
+            : 'Your enquiry was not sent. Please try again.';
+      setStatus({ kind: 'error', message });
+    }
+  };
+
+  if (status.kind === 'success') {
+    return (
+      <section className="enquiry enquiry--success" aria-live="polite">
+        <h2>Thank you for your enquiry</h2>
+        <p>
+          We have received your enquiry about <strong>{entityName}</strong>. Our sales team will be in touch using the contact details you provided.
+        </p>
+        <p className="muted">Reference: {status.enquiryId}</p>
+      </section>
+    );
+  }
+
+  const field = (name: Field, label: string, input: ReactElement) => (
+    <div className="field">
+      <label htmlFor={`enquiry-${name}`}>{label}</label>
+      {input}
+      {errors[name] && (
+        <span id={`enquiry-${name}-error`} className="field-error">
+          {errors[name]}
+        </span>
+      )}
+    </div>
+  );
+
+  const common = (name: Field) => ({
+    id: `enquiry-${name}`,
+    name,
+    value: values[name],
+    onChange: (e: { target: { value: string } }) => setValues((v) => ({ ...v, [name]: e.target.value })),
+    'aria-invalid': errors[name] ? true : undefined,
+    'aria-describedby': errors[name] ? `enquiry-${name}-error` : undefined,
+  });
+
+  return (
+    <section className="enquiry" aria-labelledby="enquiry-heading">
+      <h2 id="enquiry-heading">Enquire about {entityType === 'PRODUCT' ? 'this product' : 'this category'}</h2>
+      <form onSubmit={onSubmit} noValidate>
+        {field('name', 'Name', <input {...common('name')} type="text" autoComplete="name" required maxLength={ENQUIRY_LIMITS.nameMax} />)}
+        {field('email', 'Email', <input {...common('email')} type="email" autoComplete="email" required maxLength={ENQUIRY_LIMITS.emailMax} />)}
+        {field('phone', 'Phone', <input {...common('phone')} type="tel" autoComplete="tel" required maxLength={ENQUIRY_LIMITS.phoneMax} />)}
+        {field('message', 'Message (optional)', <textarea {...common('message')} rows={4} maxLength={ENQUIRY_LIMITS.messageMax} />)}
+        {status.kind === 'error' && (
+          <p className="form-error" role="alert">
+            {status.message}
+          </p>
+        )}
+        <button type="submit" className="button" disabled={status.kind === 'submitting'}>
+          {status.kind === 'submitting' ? 'Sending…' : 'Send enquiry'}
+        </button>
+      </form>
+    </section>
+  );
+}
