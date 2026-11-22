@@ -41,7 +41,7 @@ The following project files provide instructions or context to AI tools and shou
 | `ASSUMPTIONS.md` | Records interpretations of ambiguity and their status | Present; update when implementation evidence confirms or invalidates an assumption. |
 | `DECISIONS.md` | Records architectural decisions, alternatives, rationale and consequences | Present; change only through deliberate decision/change control. |
 | `PLAN.md` | Implementation phases, time targets, dependencies and exit gates | Present; update actual phase status and deviations during execution. |
-| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 12 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
+| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 13 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
 | `.github/workflows/ci.yml`, `codeql.yml`, `.github/dependabot.yml` | Automated verification on every PR | Added in PR #2 at the owner's request; E2E job added in PR 5. |
 
 `README.md`, `TIME_SPENT.md`, `PR_DESCRIPTION.md` and the detailed `docs/` contracts are execution/submission records. Update them from the real implementation and measured results rather than treating the planning documents as evidence that the work has been completed.
@@ -158,6 +158,7 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #9 frontend/gateway | `3ebab07` | REVIEW PASSED with optional P3s (6011463722) | RV4-01 gateway HTML errors / misleading "not sent" on timeout; RV4-02 rating not announced to screen readers; RV4-03 silent 422; RV4-04 stale README table | Owner merged #9 at `3ebab07` (14:48 IST) before the fix commit was pushed |
 | #9 | `14deff9` (pushed after merge) | Focused re-review (6011475023): fixes correct, **no P0/P1/P2 code findings**, but a delivery gap (not in `main`, no CI run) plus a new optional RV4-05 P3 | RV4-05: unvalidated correlation ID echoed into the gateway's JSON | Fixes carried into PR #12 with RV4-05; README table (RV4-04) corrected in #12 |
 | #12 submission | `22953d2` | CHANGES REQUIRED (6011496306), documentation only: no P0/P1, no code defects | RV5-01..04 P2 (time log not reconciled, a misstated review record, stale README text, missing next-steps section); RV5-05/06 P3; remaining risk: gateway 502 reported as "not sent" | Fixed in the following commit on #12; see that PR for the re-review |
+| #12 | `6fc219b` | **REVIEW PASSED** (6011518525): RV5-01..06 and the 502 risk resolved; no P0/P1/P2 | Non-blocking: PR #1 open-time precision; JSON error responses lack nosniff/CSP (cosmetic) | Closing docs commit (time row and these outcome rows only, disclosed in advance) |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 
@@ -177,6 +178,7 @@ Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.m
 | PR #9 initial | `3ebab07` | 219 s | 16 |
 | PR #9 focused re-review | `14deff9` | 108 s | 7 |
 | PR #12 final submission review | `22953d2` | 311 s | 29 |
+| PR #12 focused re-review | `6fc219b` | not reported separately | — |
 
 Every reviewer finding was validated by the implementer against the code before it was fixed. None was rejected, and one non-blocking observation was voluntarily implemented (`7d78b0d`). Re-reviews were run against the exact new head SHA each time.
 

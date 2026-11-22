@@ -10,7 +10,7 @@ Delivery was split into five sequential PRs into `main` at the project owner's r
 | [#2](https://github.com/bsncodes/catalog-platform/pull/2) | `feat/catalog-service` | Catalog Service, outbox, internal callback, CI/CodeQL/Dependabot | `03a53dd` | PASSED with P2s → fixed → CHANGES REQUIRED (RV2-06) → fixed → REVIEW PASSED | Merged by owner |
 | [#7](https://github.com/bsncodes/catalog-platform/pull/7) | `feat/notification-service` | Notification Service | `7d78b0d` | CHANGES REQUIRED → fixed → REVIEW PASSED → follow-up → REVIEW PASSED | Merged by owner |
 | [#9](https://github.com/bsncodes/catalog-platform/pull/9) | `feat/frontend-gateway` | React frontend + Nginx gateway | `3ebab07` | REVIEW PASSED with optional P3s; merged by owner at `3ebab07`. The P3 fixes (`14deff9`) were pushed after the merge, so they ship in PR 5, along with RV4-05 | Merged by owner |
-| [#12](https://github.com/bsncodes/catalog-platform/pull/12) | `test/e2e-docs` | Playwright E2E, CI E2E job, carried RV4-01..05 fixes, final documentation | `22953d2` (+ RV5 corrections) | CHANGES REQUIRED (docs only) → corrected → re-review recorded on the PR | **Open: submission PR** |
+| [#12](https://github.com/bsncodes/catalog-platform/pull/12) | `test/e2e-docs` | Playwright E2E, CI E2E job, carried RV4-01..05 fixes, final documentation | `6fc219b` | CHANGES REQUIRED (docs only) → corrected → **REVIEW PASSED** (6011518525); CI 6/6 green | **Open: submission PR** |
 
 PRs #3–#6, #8, #10 and #11 are Dependabot dependency updates, not part of the assessment implementation. The owner merged #4–#6 (GitHub Actions) and #11 (nginx 1.31); #3, #8 and #10 (Node 26 base images) are open.
 

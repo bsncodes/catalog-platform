@@ -1,7 +1,7 @@
 # Catalog Platform — Time Spent
 
 **Version:** 1.0  
-**Status:** Reconciled — single continuous session 2026-11-22 13:32:41–15:01 IST (closing row added after the final re-review)  
+**Status:** Final — single continuous session 2026-11-22 13:32:41–15:05 IST  
 **Project:** AI-Native Engineer Code Challenge  
 **Planning baseline:** 180 minutes (from `PLAN.md`)  
 **Tracking rule:** Record measured time only; never copy target time into the actual column.
@@ -47,7 +47,7 @@ The targets below are copied from the approved phase allocation in `PLAN.md`. Ph
 | 5 | Testing and integration | 20 | Interleaved | — | See session log §4 |
 | 6 | PR and independent review | 15 | Interleaved | — | See session log §4 |
 | 7 | Final corrections and documentation | 10 | Interleaved | — | See session log §4 |
-| | **Total (13:32:41–15:01, no pauses)** | **180** | **88** | **-92** | **Within the 180-minute cap; hard stop was 16:32:41 IST** |
+| | **Total (13:32:41–15:05, no pauses)** | **180** | **93** | **-87** | **Within the 180-minute cap; hard stop was 16:32:41 IST** |
 
 **Variance formula:** `Actual minutes − Target minutes`. A positive value is an overrun; a negative value is time saved. Do not report a total actual duration while any material execution time is untracked without clearly qualifying the total.
 
@@ -63,6 +63,7 @@ Add one row for each focused work session. Use additional rows when a phase span
 | S-001 (cont.) | 2026-11-22 | 2, 3, 4, 5, 6 (interleaved) | 13:54 | 14:33 | 0 | 39 | PR #2 opened; CI/CodeQL/Dependabot added at owner request; RV2-01..06 fixed over three review rounds; owner merged PR #2 (~14:17). Notification Service built and tested; PR #7 opened, RV3-01..03 fixed, re-reviewed twice (REVIEW PASSED at 7d78b0d). React frontend + Nginx gateway built and verified (PR 4, local). Playwright E2E 5/5; fresh `down -v` → ready in 145s → E2E 5/5 with live Fake Store | PR #2 reviews 6011233839…6011294790; PR #7 reviews 6011373403…6011412047; CI runs on each PR |
 | S-001 (cont.) | 2026-11-22 | 6, 7 | 14:33 | 14:43 | 0 | 10 | Checkpoint at the owner's request ("note all this TIME_SPEND and AI_USAGE"): recorded owner directions, permission events, reviewer runtimes and this time log; adopted the owner's time-accounting rule. PR #7 awaiting owner merge (time counted); PRs 4–5 ready locally | Commits on `test/e2e-docs` |
 | S-001 (cont.) | 2026-11-22 | 3, 6, 7 | 14:43 | 15:01 | 0 | 17 | Owner merged #7; PR #9 opened, reviewed (REVIEW PASSED + optional P3s); owner merged #9 while its P3 fixes were being pushed, so the fixes were carried into #12; RV4-05 fixed; PR #12 opened; final review RV5 (docs-only CHANGES REQUIRED) addressed: time log reconciled, AI_USAGE corrected, README cleaned up, next steps added, gateway 502 treated as unknown outcome, E2E env fallback | PR #9 reviews 6011463722/6011475023; PR #12 review 6011496306; CI green on #12 incl. E2E |
+| S-001 (close) | 2026-11-22 | 6, 7 | 15:01 | 15:05 | 0 | 5 | Final focused re-review of #12 at `6fc219b`: REVIEW PASSED (6011518525), CI 6/6 green incl. E2E; this closing docs commit. Session ended; #12 left open for submission | PR #12 review 6011518525 |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 
@@ -78,7 +79,7 @@ Add rows as required; do not leave placeholder rows in the final submitted recor
 
 ### 4.2 AI tool runtime (diagnostic, overlapping)
 
-Reviewer subagent runs totalled about 39 minutes of wall time across 12 runs (see `AI_USAGE.md` §6). They ran **in parallel** within the session's wall clock, so they add nothing to the total.
+Reviewer subagent runs: 13 runs in total (see `AI_USAGE.md` §6) (see `AI_USAGE.md` §6). They ran **in parallel** within the session's wall clock, so they add nothing to the total.
 
 ## 5. Planning and Documentation Preparation
 
@@ -98,19 +99,19 @@ Complete this section using actual timestamps and links.
 | Catalogue experience completed | 2026-11-22 ~14:20 (frontend + gateway verified locally) | RTL 14/14; gateway curls; E2E steps 1–4 |
 | Enquiry-to-email happy path verified | 2026-11-22 ~14:11 (backend), ~14:24 (browser E2E) | Enquiry → Mailpit → PROCESSED locally; Playwright journey |
 | Failure and retry paths verified | 2026-11-22 ~14:12 | Notification integration tests (email failure, DLQ, callback retry after restart, circuit breaker) |
-| Assessment PRs opened | #1 ~13:49, #2 ~13:56, #7 ~14:19, #9 14:44, #12 (submission, left open) 14:53 | GitHub PRs |
+| Assessment PRs opened | #1 13:47:56, #2 ~13:56, #7 ~14:19, #9 14:44, #12 (submission, left open) 14:53 | GitHub PRs |
 | Independent reviewer verdicts received | Every PR; latest: #12 final review 14:58 (docs-only CHANGES REQUIRED) | `AI_USAGE.md` §6 |
 | Required corrections completed | 2026-11-22 15:01 (RV5 corrections; all earlier P2/P3 fixed per PR) | Commits on #12; `AI_USAGE.md` §6 |
-| Final verification completed | 2026-11-22 15:01 (local gates) + final re-review (see closing row) | typecheck/lint/unit/integration/E2E; CI on #12 |
+| Final verification completed | 2026-11-22 15:05: local gates at 15:01; final re-review REVIEW PASSED at `6fc219b`; CI 6/6 green | typecheck/lint/unit/integration/E2E; CI on #12 |
 
 ## 7. Time-Box Review
 
 | Metric | Actual result |
 |---|---|
-| Total active project time | **88 minutes** (13:32:41–15:01 IST), plus the short closing row after the final re-review |
+| Total active project time | **93 minutes** (13:32:41–15:05 IST) |
 | Total wall-clock span | Same: one continuous session with no pauses (owner's rule, §4) |
 | Total breaks / unrelated interruptions | 0 |
-| Difference from 180-minute target | -92 minutes (under target) |
+| Difference from 180-minute target | -87 minutes (under target) |
 | Phases completed within target | Phases ran interleaved; the whole plan finished inside the 180-minute cap |
 | Main causes of savings | Parallel work: the next service was built while each PR was under review. Shared contracts removed rework. Each reviewer finding was fixed while it was still small. |
 | Work deferred or left incomplete | No functional requirement incomplete. Deferred by design: CD to AWS, CloudWatch alarms, authenticated `RESOLVED` workflow, product cache, permanent-vs-transient email error classification (`DECISIONS.md` §9, README limitations) |
