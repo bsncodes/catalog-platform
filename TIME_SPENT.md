@@ -58,6 +58,7 @@ Add one row for each focused work session. Use additional rows when a phase span
 | Session | Date | Phase | Start (IST) | End (IST) | Breaks / unrelated interruption (min) | Active project time (min) | Work performed and outcome | Evidence |
 |---|---|---|---|---|---:|---:|---|---|
 | S-001 | 2026-11-22 | 0, 1, 2, 6 (interleaved) | 13:32 | 13:54 | 0 | 22 | Repository inspection; workspace + contracts + infra (PR 1); Catalog Service implementation and tests; PR strategy changed to sequential PRs (ADR-017, owner decision at ~13:44); PR #1 opened, reviewed (CHANGES REQUIRED, 2×P2 + 3×P3), fixed, re-reviewed (REVIEW PASSED); owner merged PR #1 at 13:53 | Start `date` 13:32:41; commits d6d0378, 9ccbd8b, PR #1 reviews 6011199598 / 6011207779 |
+| S-001 (cont.) | 2026-11-22 | 2, 3, 4, 5, 6 (interleaved) | 13:54 | 14:33 | 0 | 39 | PR #2 opened; CI/CodeQL/Dependabot added at owner request; RV2-01..06 fixed over three review rounds; owner merged PR #2 (~14:17). Notification Service built and tested; PR #7 opened, RV3-01..03 fixed, re-reviewed twice (REVIEW PASSED at 7d78b0d). React frontend + Nginx gateway built and verified (PR 4, local). Playwright E2E 5/5; fresh `down -v` → ready in 145s → E2E 5/5 with live Fake Store | PR #2 reviews 6011233839…6011294790; PR #7 reviews 6011373403…6011412047; CI runs on each PR |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 
@@ -76,9 +77,9 @@ Complete this section using actual timestamps and links.
 | Repository inspection completed | 2026-11-22 13:33 | Feature branch created after reading CLAUDE/PLAN/contracts docs |
 | Feature branch created | 2026-11-22 13:33 (`feat/catalog-platform`); replaced by per-PR branches from 13:47 (ADR-017) | `git checkout -b` output |
 | Local environment starts successfully | 2026-11-22 ~13:51 infra + Catalog (no gateway yet) | `docker compose up -d --build catalog`: migrate applied, catalog healthy, featured 200, enquiry 202 + outbox published |
-| Catalogue experience completed | Pending | Pending |
-| Enquiry-to-email happy path verified | Pending | Pending |
-| Failure and retry paths verified | Pending | Pending |
+| Catalogue experience completed | 2026-11-22 ~14:20 (frontend + gateway verified locally) | RTL 14/14; gateway curls; E2E steps 1–4 |
+| Enquiry-to-email happy path verified | 2026-11-22 ~14:11 (backend), ~14:24 (browser E2E) | Enquiry → Mailpit → PROCESSED locally; Playwright journey |
+| Failure and retry paths verified | 2026-11-22 ~14:12 | Notification integration tests (email failure, DLQ, callback retry after restart, circuit breaker) |
 | Assessment PR opened | PR #1 (setup) opened 2026-11-22 ~13:48–13:50; merged by owner 13:53 | https://github.com/bsncodes/catalog-platform/pull/1 |
 | Independent reviewer verdict received | PR #1: CHANGES REQUIRED then REVIEW PASSED (9ccbd8b) before 13:53 | PR #1 reviews |
 | Required corrections completed | Pending | Pending |

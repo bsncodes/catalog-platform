@@ -129,6 +129,8 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #2 | `be5ee15` | CHANGES REQUIRED (6011271968) | RV2-06 P2: RV2-02 fix ineffective (reproduced) | `03a53dd` |
 | #2 | `03a53dd` | REVIEW PASSED (6011294790) | — | Merged by owner |
 | #7 notification | `39b2f71` | CHANGES REQUIRED (6011373403) | RV3-01 P2, RV3-02/03 P3 | `872100b` |
+| #7 | `872100b` | REVIEW PASSED (6011398653) | Non-blocking: guard timeout released the email lease | `7d78b0d` (accepted voluntarily) |
+| #7 | `7d78b0d` | REVIEW PASSED (6011412047) | — | — |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 
@@ -143,7 +145,7 @@ Add a row for each meaningful implementation or review session. Keep the entries
 | 2026-11-21 | GPT-6 | Planning and project-document preparation | `ASSUMPTIONS.md`, `DECISIONS.md`, `PLAN.md` | User reviewed the direction and provided corrections; no application-code verification is implied | Planning records prepared; implementation usage remains to be logged |
 | 2026-11-22 | Claude Code — Claude Opus 5.5 | Workspace, contracts, infra (PR #1) | root config, `packages/contracts`, `docker-compose.yml`, `infra/` | Owner approved the PR strategy and the push; owner merged | Merged |
 | 2026-11-22 | Claude Code — Claude Opus 5.5 | Catalog Service + CI (PR #2) | `services/catalog`, `.github/` | 45 unit + 18 integration tests, compose smoke, GitHub Actions; owner requested CI in this PR | Merged after 3 review rounds |
-| 2026-11-22 | Claude Code — Claude Opus 5.5 | Notification Service (PR #7) | `services/notification` | 24 unit + 15 integration tests, full local SQS→Mailpit→PROCESSED run | In review |
+| 2026-11-22 | Claude Code — Claude Opus 5.5 | Notification Service (PR #7) | `services/notification` | 24 unit + 16 integration tests, full local SQS→Mailpit→PROCESSED run | REVIEW PASSED at `7d78b0d` |
 | 2026-11-22 | Claude Code — Claude Opus 5.5 | Frontend + gateway, Playwright E2E | `apps/web`, `infra/nginx`, `e2e/` | 14 RTL tests; 5 Playwright tests against the running stack | PRs 4–5 |
 | 2026-11-22 | Claude Code `pr-reviewer` subagent — Opus 5.5 | Independent review of every PR | none (read-only) | Implementer validated every finding before fixing; all were accepted | See §6 |
 
