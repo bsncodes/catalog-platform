@@ -16,7 +16,8 @@ Implementation is delivered as sequential pull requests into `main` (see `DECISI
 | 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | Merged (#9); P3 fixes carried in #12 |
 | 5 | `test/e2e-docs` | End-to-end verification, carried PR 4 fixes and final documentation | Merged (#12) |
 | 6 | `feat/enquiry-status-api` | Read-only enquiry status API (owner request after #12) | Merged (#13) |
-| 7 | `feat/final-submission` | Enquire button, time split, final submission docs | **Open: submission PR, leave unmerged** |
+| 7 | `feat/final-submission` | Enquire button, time split, final submission docs | Merged (#14) |
+| 8 | `docs/session-close-out` | Session close-out records | Merged by the owner |
 
 Running the complete application:
 
@@ -355,7 +356,8 @@ Known limitations of the implementation:
 - [x] Source code and tests included; no secrets committed (`.env` is git-ignored).
 - [x] README reflects actual ports, environment variables, test commands and limitations.
 - [x] `AI_USAGE.md` and `TIME_SPENT.md` completed from actual evidence.
-- [x] Feature branches pushed and PRs opened into `main` (sequential PRs, ADR-017); the final submission PR (`feat/final-submission`) is left open.
+- [x] Feature branches pushed and PRs opened into `main` (sequential PRs, ADR-017).
+- [ ] **An open PR into `main` is left open.** Not met: by the owner's decision, every PR was merged (see `DECISIONS.md` ADR-017, *Final state*).
 
 ## Further work
 
