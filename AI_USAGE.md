@@ -93,6 +93,7 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 | 14:43 | *"we should only consider only the active time in the session, irrespective of how many agents are working, means the time we started and paused, and then resumed, until we finished, and the total time shouldn't exceed 180 mins."* | `TIME_SPENT.md` now counts session wall-clock time only: parallel agents add nothing, waiting inside the session counts, and there is a hard stop at 16:32:41 IST. |
 | 15:08 | *"pause the timespent"* | Clock stopped at 15:08:17; S-001 total 95 minutes. |
 | 15:30 | *"is there any API for checking the status of an enquiry, using enquiry ID instead of going into the database … if not there then build it"* | Confirmed none existed. Built `GET /api/catalog/enquiries/{enquiryId}` (ASM-035, ADR-019): business lifecycle only, no customer data, rate limited, `no-store`. Notification delivery internals stay private by design. Logged as S-002 in `TIME_SPENT.md`. |
+| 15:36 | *"raise PR and pause the session, stating that tokens limit reached and give me the PR link"* | PR #12 had already been merged before the status-API commit landed, so a new PR carries it. Session paused; the in-flight review of this change is recorded as incomplete. |
 
 ### 4.7 Tooling and permission events
 
