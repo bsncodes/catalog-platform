@@ -395,6 +395,37 @@ A committed enquiry must not be silently discarded because the Outbox publisher 
 
 ---
 
+### 3.2 Get enquiry status
+
+`GET /api/catalog/enquiries/{enquiryId}`
+
+**Purpose:** Let a customer or support agent check an enquiry's business lifecycle using the reference (`enquiryId`) returned by `POST /enquiries`, without database access (ASM-035, ADR-019).
+
+**Success:** `200 OK`, `Cache-Control: no-store`
+
+```json
+{
+  "data": {
+    "enquiryId": "<uuid>",
+    "status": "PROCESSED",
+    "entity": { "type": "PRODUCT", "id": "1", "name": "Example product" },
+    "receivedAt": "2026-11-22T09:00:00.000Z",
+    "processedAt": "2026-11-22T09:00:02.000Z",
+    "resolvedAt": null
+  }
+}
+```
+
+**Privacy and boundaries:**
+
+- The response never contains customer name, email, phone or message, or the resolver identity/notes.
+- `status` is the Catalog-owned business lifecycle only. `PROCESSED` already implies that the email provider accepted the notification *and* Catalog persisted the callback. Email-delivery and callback-retry details stay in Notification Service's database and are not exposed (Catalog must not read them).
+- The enquiry ID is a random UUID shown to the customer as their reference; it is not guessable or enumerable. The endpoint is read-only and rate limited per IP (`ENQUIRY_STATUS_RATE_LIMIT_PER_MINUTE`, default 60).
+
+**Errors:** `400 VALIDATION_ERROR` (malformed UUID), `404 ENQUIRY_NOT_FOUND`, `429 RATE_LIMITED`, `503 DATABASE_UNAVAILABLE`, `500 INTERNAL_ERROR`.
+
+---
+
 ## 4. Private Notification Callback API
 
 ### 4.1 Report successful notification processing
@@ -487,7 +518,7 @@ A non-2xx response must not cause Notification Service to resend an email that h
 
 ## 5. Enquiry Lifecycle and API Boundary
 
-The public API supports enquiry creation only. The initial assessment does not include a public endpoint for resolving enquiries or changing their status.
+The public API supports enquiry creation and a read-only, PII-free status lookup (§3.2). There is no public endpoint for resolving enquiries or changing their status.
 
 The only normal lifecycle transitions are:
 

@@ -6,6 +6,8 @@ import type { ZodError } from 'zod';
 import { AppError, Errors, type ErrorDetail } from '../errors.js';
 import type { EnquiryService } from './enquiryService.js';
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function toDetails(error: ZodError): ErrorDetail[] {
   return error.issues.map((issue) => ({ field: issue.path.join('.') || '(body)', message: issue.message }));
 }
@@ -17,7 +19,7 @@ function isStructuralIssue(issue: ZodError['issues'][number], body: Record<strin
   return issue.code === 'invalid_type' && issue.path.length === 1 && typeof topLevel === 'string' && body[topLevel] !== undefined;
 }
 
-export function publicEnquiryRoutes(enquiries: Pick<EnquiryService, 'createEnquiry'>, ratePerMinute: number): Router {
+export function publicEnquiryRoutes(enquiries: Pick<EnquiryService, 'createEnquiry' | 'getEnquiryStatus'>, ratePerMinute: number, statusRatePerMinute = 60): Router {
   const router = Router();
   const limiter = rateLimit({
     windowMs: 60_000,
@@ -46,6 +48,28 @@ export function publicEnquiryRoutes(enquiries: Pick<EnquiryService, 'createEnqui
     res.status(202).json(body);
   });
 
+  // Read-only lifecycle lookup by the unguessable enquiry id the customer received (ASM-035).
+  const statusLimiter = rateLimit({
+    windowMs: 60_000,
+    limit: statusRatePerMinute,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    handler: (req, res) => {
+      res.status(429).json({ error: { code: 'RATE_LIMITED', message: 'Too many status requests. Please try again shortly.', requestId: req.correlationId } });
+    },
+  });
+
+  router.get('/enquiries/:enquiryId', (_req, res, next) => {
+    // Applies to every outcome (200, 400, 404, 429, 503): status lookups must never be cached (RV6-03).
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  }, statusLimiter, async (req, res) => {
+    const enquiryId = String(req.params.enquiryId ?? '');
+    if (!UUID_PATTERN.test(enquiryId)) throw Errors.validation('The enquiry identifier is malformed.', [{ field: 'enquiryId', message: 'Must be a UUID.' }]);
+    const status = await enquiries.getEnquiryStatus(enquiryId.toLowerCase());
+    res.json({ data: status });
+  });
+
   return router;
 }
 
@@ -62,8 +86,6 @@ export function requireServiceToken(expectedToken: string) {
     next();
   };
 }
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function internalEnquiryRoutes(enquiries: Pick<EnquiryService, 'applyNotificationCallback'>, token: string): Router {
   const router = Router();

@@ -26,6 +26,7 @@ const configSchema = z.object({
   OUTBOX_CLAIM_LEASE_MS: z.coerce.number().int().positive().default(180000),
   SQS_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
   ENQUIRY_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(10),
+  ENQUIRY_STATUS_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(60),
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(1),
 });
 

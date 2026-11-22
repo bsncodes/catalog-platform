@@ -6,6 +6,7 @@ import {
   type CatalogEnquirySubmittedV1,
   type EnquiryRequest,
   type EnquiryStatus,
+  type EnquiryStatusResponse,
   type NotificationStatusCallback,
 } from '@catalog/contracts';
 import { AppError, Errors } from '../errors.js';
@@ -112,6 +113,25 @@ export class EnquiryService {
       if (error instanceof InvalidTransitionError) throw Errors.conflict('INVALID_TRANSITION', error.message);
       throw Errors.databaseUnavailable(error);
     }
+  }
+
+  /** Read-only, PII-free lifecycle view (ASM-035). */
+  async getEnquiryStatus(enquiryId: string): Promise<EnquiryStatusResponse> {
+    let row;
+    try {
+      row = await enquiryRepository.findStatus(this.pool, enquiryId);
+    } catch (error) {
+      throw Errors.databaseReadUnavailable(error);
+    }
+    if (!row) throw Errors.notFound('ENQUIRY_NOT_FOUND', 'The enquiry does not exist.');
+    return {
+      enquiryId: row.id,
+      status: row.status,
+      entity: { type: row.entity_type, id: row.entity_id, name: row.entity_name },
+      receivedAt: row.received_at.toISOString(),
+      processedAt: row.processed_at?.toISOString() ?? null,
+      resolvedAt: row.resolved_at?.toISOString() ?? null,
+    };
   }
 
   /**

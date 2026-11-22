@@ -10,7 +10,8 @@ Delivery was split into five sequential PRs into `main` at the project owner's r
 | [#2](https://github.com/bsncodes/catalog-platform/pull/2) | `feat/catalog-service` | Catalog Service, outbox, internal callback, CI/CodeQL/Dependabot | `03a53dd` | PASSED with P2s → fixed → CHANGES REQUIRED (RV2-06) → fixed → REVIEW PASSED | Merged by owner |
 | [#7](https://github.com/bsncodes/catalog-platform/pull/7) | `feat/notification-service` | Notification Service | `7d78b0d` | CHANGES REQUIRED → fixed → REVIEW PASSED → follow-up → REVIEW PASSED | Merged by owner |
 | [#9](https://github.com/bsncodes/catalog-platform/pull/9) | `feat/frontend-gateway` | React frontend + Nginx gateway | `3ebab07` | REVIEW PASSED with optional P3s; merged by owner at `3ebab07`. The P3 fixes (`14deff9`) were pushed after the merge, so they ship in PR 5, along with RV4-05 | Merged by owner |
-| [#12](https://github.com/bsncodes/catalog-platform/pull/12) | `test/e2e-docs` | Playwright E2E, CI E2E job, carried RV4-01..05 fixes, final documentation | `6fc219b` | CHANGES REQUIRED (docs only) → corrected → **REVIEW PASSED** (6011518525); CI 6/6 green | **Open: submission PR** |
+| [#12](https://github.com/bsncodes/catalog-platform/pull/12) | `test/e2e-docs` | Playwright E2E, CI E2E job, carried RV4-01..05 fixes, final documentation | `6fc219b` | CHANGES REQUIRED (docs only) → corrected → **REVIEW PASSED** (6011518525); CI 6/6 green | Merged by owner at `b4e86af` (15:27:29 IST) |
+| [#13](https://github.com/bsncodes/catalog-platform/pull/13) | `feat/enquiry-status-api` | Enquiry status API `GET /api/catalog/enquiries/{enquiryId}` + RV6/RV7 fixes | `80f35ed` | Status API on `6d89558`: no code defects (6011622896) → RV6 fixed → 6013178058 docs-only CHANGES REQUIRED → RV7 fixed → **REVIEW PASSED** (6013202469); CI 6/6 | **Open: submission PR** |
 
 PRs #3–#6, #8, #10 and #11 are Dependabot dependency updates, not part of the assessment implementation. The owner merged #4–#6 (GitHub Actions) and #11 (nginx 1.31); #3, #8 and #10 (Node 26 base images) are open.
 
@@ -20,6 +21,7 @@ PRs #3–#6, #8, #10 and #11 are Dependabot dependency updates, not part of the 
 - **Two microservices** with separate databases. Catalog Service owns the catalogue, enquiries, lifecycle, Transactional Outbox and internal callback. Notification Service owns the SQS consumer, email delivery ledger, templates, callback retry and circuit breaker.
 - **AWS-compatible messaging:** AWS SDK v3 against ElasticMQ locally (SQS + DLQ in AWS). SMTP to Mailpit locally, with an Amazon SES adapter behind the same interface.
 - **Reliability:** atomic enquiry + outbox; at-least-once tolerant consumers; email never resent because of a callback failure; durable callback retries that survive restarts; `RESOLVED` never regressed.
+- **Enquiry status API:** `GET /api/catalog/enquiries/{enquiryId}` returns the lifecycle (`RECEIVED` / `PROCESSED` / `RESOLVED`) with timestamps, no customer data (ASM-035, ADR-019); added after the initial submission review at the owner's request.
 - **Local:** `cp .env.example .env && docker compose up --build` → http://localhost:8080, with emails visible at http://localhost:8025.
 
 ## Assessment acceptance criteria
@@ -76,13 +78,13 @@ Then open http://localhost:8080, submit an enquiry, and check http://localhost:8
 | Typecheck (strict) | `pnpm typecheck` | pass |
 | Lint | `pnpm lint` | pass |
 | Contracts | `pnpm test` | 23 |
-| Catalog unit/API | `pnpm test` | 45 |
+| Catalog unit/API | `pnpm test` | 50 |
 | Notification unit | `pnpm test` | 24 |
 | Web (React Testing Library) | `pnpm test` | 17 |
-| Catalog integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 18 |
+| Catalog integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 20 |
 | Notification integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 16 |
 | End-to-end (Playwright, full stack) | `pnpm test:e2e` | 5 |
-| GitHub Actions | quality, integration, compose smoke, CodeQL (from PR #2); E2E job (from PR #12) | green on PRs #2, #7, #9 and #12 (CI did not exist for PR #1) |
+| GitHub Actions | quality, integration, compose smoke, CodeQL (from PR #2); E2E job (from PR #12) | green on PRs #2, #7, #9, #12 and #13 (CI did not exist for PR #1) |
 
 Critical failure paths covered by tests:
 - email failure leaves the enquiry `RECEIVED`

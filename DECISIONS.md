@@ -64,6 +64,7 @@ Do not change an approved architectural decision merely because another technolo
 | ADR-016 | Defer full AWS provisioning and non-essential product capabilities | ACCEPTED | ASM-024, ASM-026, ASM-027 |
 | ADR-017 | Deliver the implementation as sequential, reviewed PRs into `main` instead of one assessment PR | ACCEPTED (supersedes CLAUDE.md §21 single-PR rule) | — |
 | ADR-018 | Authenticate the internal callback with a shared bearer token on a separate private listener | ACCEPTED | ASM-030, ASM-032 |
+| ADR-019 | Expose a read-only, PII-free enquiry status API from Catalog Service | ACCEPTED | ASM-035 |
 
 ---
 
@@ -692,6 +693,20 @@ Each PR receives its own `pr-reviewer` subagent review, published on that PR. Th
 **Consequences:**
 - Works identically locally and on ECS; in AWS the token lives in Secrets Manager and the internal port is restricted by security group to the Notification Service task.
 - Token rotation requires coordinated redeploys; an IAM/SigV4 upgrade path is documented as future work.
+
+---
+
+### ADR-019 — Read-Only Enquiry Status API
+
+**Status:** ACCEPTED — added at the owner's request on 2026-11-22.
+
+**Context:** Checking an enquiry's progress previously required querying `catalog_enquiries` directly.
+
+**Decision:** Add `GET /api/catalog/enquiries/{enquiryId}` to Catalog Service's public API. It returns status, timestamps and entity reference, and never customer data. It is served through the gateway, rate limited and `no-store`.
+
+**Alternatives considered:** expose Notification Service delivery details as well (rejected: it would need Catalog to read another service's data, or Notification Service to be publicly exposed); authenticate the lookup (deferred with customer authentication, ASM-029).
+
+**Consequences:** A public read path now exists for the business lifecycle only. The contract change is reflected in `docs/api-contracts.md` §3.2 and `docs/openapi.yaml`. A future authenticated sales API can return richer details, including customer data.
 
 ---
 

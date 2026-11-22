@@ -2,22 +2,27 @@ import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { createInternalApp, createPublicApp } from '../src/app.js';
 import { CatalogService } from '../src/products/catalogService.js';
-import { ProviderError } from '../src/errors.js';
+import { Errors, ProviderError } from '../src/errors.js';
 import type { ProductProvider } from '../src/products/provider.js';
 import { FEATURED, fixtureProvider, silentLogger } from './helpers.js';
+
+const STATUS_ID = '6f1c1f5e-2f0a-4b8b-9b8e-7f8a1f6c1a11';
 
 function buildApp(provider: ProductProvider = fixtureProvider()) {
   const createEnquiry = vi.fn(async () => ({ enquiryId: '6f1c1f5e-2f0a-4b8b-9b8e-7f8a1f6c1a11', eventId: 'e', status: 'RECEIVED' as const }));
   const applyNotificationCallback = vi.fn();
+  const getEnquiryStatus = vi.fn(async (id: string) => {
+    return { enquiryId: id, status: 'PROCESSED' as const, entity: { type: 'PRODUCT' as const, id: '1', name: 'Backpack' }, receivedAt: '2026-11-22T09:00:00.000Z', processedAt: '2026-11-22T09:00:02.000Z', resolvedAt: null };
+  });
   const app = createPublicApp({
     logger: silentLogger,
     catalog: new CatalogService(provider, FEATURED),
-    enquiries: { createEnquiry, applyNotificationCallback },
+    enquiries: { createEnquiry, applyNotificationCallback, getEnquiryStatus },
     pool: { query: vi.fn(async () => ({ rows: [] })) } as never,
     enquiryRateLimitPerMinute: 3,
     trustProxyHops: 0,
   });
-  return { app, createEnquiry };
+  return { app, createEnquiry, getEnquiryStatus };
 }
 
 const validEnquiry = {
@@ -126,10 +131,50 @@ describe('POST /api/catalog/enquiries', () => {
   });
 });
 
+describe('GET /api/catalog/enquiries/:enquiryId (status)', () => {
+  it('returns the PII-free lifecycle view with no-store caching', async () => {
+    const res = await request(buildApp().app).get(`/api/catalog/enquiries/${STATUS_ID.toUpperCase()}`);
+    expect(res.status).toBe(200);
+    expect(res.headers['cache-control']).toBe('no-store');
+    expect(res.body.data).toEqual({ enquiryId: STATUS_ID, status: 'PROCESSED', entity: { type: 'PRODUCT', id: '1', name: 'Backpack' }, receivedAt: '2026-11-22T09:00:00.000Z', processedAt: '2026-11-22T09:00:02.000Z', resolvedAt: null });
+  });
+
+  it('rejects a malformed id with 400 without hitting the service', async () => {
+    const { app, getEnquiryStatus } = buildApp();
+    const res = await request(app).get('/api/catalog/enquiries/not-a-uuid');
+    expect(res.status).toBe(400);
+    expect(res.headers['cache-control']).toBe('no-store');
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(getEnquiryStatus).not.toHaveBeenCalled();
+  });
+
+  it('maps a database failure to 503 with a read-specific message and no-store (RV6-03)', async () => {
+    const { app, getEnquiryStatus } = buildApp();
+    getEnquiryStatus.mockRejectedValueOnce(Errors.databaseReadUnavailable(new Error('connection terminated')));
+    const res = await request(app).get(`/api/catalog/enquiries/${STATUS_ID}`);
+    expect(res.status).toBe(503);
+    expect(res.headers['cache-control']).toBe('no-store');
+    expect(res.body.error).toMatchObject({ code: 'DATABASE_UNAVAILABLE', message: 'The service is temporarily unable to read data. Please retry.' });
+    expect(JSON.stringify(res.body)).not.toContain('connection terminated');
+  });
+
+  it('is rate limited', async () => {
+    const { app } = buildApp();
+    const statuses: number[] = [];
+    let last: request.Response | undefined;
+    for (let i = 0; i < 61; i += 1) {
+      last = await request(app).get(`/api/catalog/enquiries/${STATUS_ID}`);
+      statuses.push(last.status);
+    }
+    expect(statuses.at(-1)).toBe(429);
+    expect(last?.headers['cache-control']).toBe('no-store');
+  });
+});
+
 describe('internal callback API authentication', () => {
   const internal = createInternalApp({
     logger: silentLogger,
-    enquiries: { createEnquiry: vi.fn(), applyNotificationCallback: vi.fn(async (id: string) => ({ enquiryId: id, status: 'PROCESSED' as const, callbackResult: 'APPLIED' as const })) },
+    enquiries: { applyNotificationCallback: vi.fn(async (id: string) => ({ enquiryId: id, status: 'PROCESSED' as const, callbackResult: 'APPLIED' as const })) },
     internalToken: 'test-internal-token-123',
   });
   const path = '/internal/catalog/enquiries/6f1c1f5e-2f0a-4b8b-9b8e-7f8a1f6c1a11/notification-status';

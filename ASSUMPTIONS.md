@@ -94,6 +94,7 @@ All entries in this initial register are marked `ACCEPTED` unless explicitly ide
 | ASM-032 | Callback authentication | Implement ASM-030 as a shared bearer token on a separate internal listener (port 3001) that the Gateway never routes. | HIGH | VERIFIED |
 | ASM-033 | Callback terminal state | Add a monitored terminal `FAILED` callback status for non-retryable rejections and exhausted callback retries. | MEDIUM | VERIFIED |
 | ASM-034 | Duplicate email window | A crash after provider acceptance but before the ledger records `SENT` can resend one email on redelivery; this window is accepted, not eliminated. | MEDIUM | IMPLEMENTED |
+| ASM-035 | Enquiry status lookup | A public, read-only, PII-free status endpoint keyed by the unguessable enquiry ID is acceptable without customer authentication. | MEDIUM | VERIFIED |
 
 ---
 
@@ -906,6 +907,23 @@ Tests: 404 → `FAILED`; max attempts → `FAILED`; 503 → `PENDING` with backo
 
 **Assumption**
 SMTP/SES acceptance and the PostgreSQL ledger write cannot be made atomic. If the process crashes after the provider accepts the email but before `email_status = SENT` is committed, SQS redelivers the message and the email is sent again. The window is a few milliseconds and is accepted for this proof of concept. A callback failure never causes a resend, because `SENT` is committed before any callback attempt. A per-event email lease (`email_lease_until`) stops two concurrent consumers from both sending. If the processor's send guard times out while the provider call may still complete, the lease is **kept** (not cleared), so a redelivery cannot start a parallel send until the lease expires. A definite provider failure releases the lease so the retry can proceed.
+
+---
+
+### ASM-035 — Public Enquiry Status Lookup
+
+**Source:** Owner request on 2026-11-22 (15:30 IST): an API to check an enquiry's status by ID instead of querying the database.
+**Impact:** MEDIUM
+**Status:** VERIFIED (covered by `services/catalog/test/publicApi.test.ts`, `test/enquiryService.test.ts`, `test/integration/enquiryLifecycle.test.ts`, the E2E journey and the CI smoke test. CI first ran on this code in PR #13 at `2338924`: 6/6 green)
+
+**Ambiguity**
+The original contract exposed enquiry creation only, and customer authentication is out of scope (ASM-029).
+
+**Assumption**
+`GET /api/catalog/enquiries/{enquiryId}` returns only the business lifecycle (status, timestamps, entity type/id/name). The random UUID enquiry ID, which is shown to the customer as their reference, works as a bearer-style lookup key. Because no personal data is returned, a lookup by a third party who learned the ID reveals only that an enquiry about a public product or category exists and how far it has progressed. The endpoint is read-only, `no-store` and rate limited. Notification-delivery internals are not exposed: Catalog may not read Notification Service data, and `PROCESSED` already implies email acceptance plus a persisted callback.
+
+**Validation**
+Tests assert RECEIVED → PROCESSED → RESOLVED with timestamps, no PII in the response, 400 for a malformed ID, 404 for an unknown one, and 429 when the rate limit is exceeded.
 
 ---
 

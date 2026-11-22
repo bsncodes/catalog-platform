@@ -14,7 +14,8 @@ Implementation is delivered as sequential pull requests into `main` (see `DECISI
 | 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback, CI | Merged (#2) |
 | 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | Merged (#7) |
 | 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | Merged (#9); P3 fixes carried in #12 |
-| 5 | `test/e2e-docs` | End-to-end verification, carried PR 4 fixes and final documentation | Open (#12, submission PR) |
+| 5 | `test/e2e-docs` | End-to-end verification, carried PR 4 fixes and final documentation | Merged (#12) |
+| 6 | `feat/enquiry-status-api` | Read-only enquiry status API (owner request after #12) | Open (#13, submission PR) |
 
 Running the complete application:
 
@@ -165,6 +166,7 @@ Database roles and passwords are created only when the PostgreSQL volume is firs
 | `PRODUCT_PROVIDER` | `fakestore` (live Fake Store API) or `fixture` (offline snapshot) | `fakestore` |
 | `FEATURED_PRODUCT_IDS` | Exactly five distinct product IDs for the homepage (validated at startup) | `1,5,9,12,18` |
 | `ENQUIRY_RATE_LIMIT_PER_MINUTE` | Per-IP public enquiry rate limit | `10` |
+| `ENQUIRY_STATUS_RATE_LIMIT_PER_MINUTE` | Per-IP limit for enquiry status lookups | `60` |
 | `INTERNAL_API_TOKEN` | Bearer token for the internal Catalog callback (minimum 16 characters) | local placeholder |
 | `EMAIL_FROM`, `SALES_RECIPIENT_PRODUCT`, `SALES_RECIPIENT_CATEGORY` | Trusted, server-side email routing | `@example.com` addresses (captured by Mailpit) |
 | `GATEWAY_PORT`, `MAILPIT_UI_PORT`, `POSTGRES_HOST_PORT`, `SQS_HOST_PORT` | Host ports (Postgres/SQS/Mailpit bound to 127.0.0.1) | `8080`, `8025`, `55432`, `59324` |
@@ -195,6 +197,7 @@ All browser requests go through the API Gateway under `/api/catalog`. The implem
 | `GET` | `/api/catalog/categories` | Return available categories. |
 | `GET` | `/api/catalog/categories/:categoryId/products` | Return top-rated and additional products for a category. |
 | `POST` | `/api/catalog/enquiries` | Create a product or category enquiry. |
+| `GET` | `/api/catalog/enquiries/{enquiryId}` | Read-only lifecycle status (`RECEIVED` / `PROCESSED` / `RESOLVED`) with timestamps and entity; no customer data. Example: `curl http://localhost:8080/api/catalog/enquiries/<reference>` |
 
 The Notification Service callback is an internal service-to-service operation, not a public browser endpoint:
 
@@ -276,8 +279,8 @@ Run from the repository root after `pnpm install` (Node 22+, pnpm 10.17):
 | Suite | Tests |
 |---|---|
 | Contracts (unit) | 23 |
-| Catalog Service (unit/API) | 45 |
-| Catalog Service (integration) | 18 |
+| Catalog Service (unit/API) | 50 |
+| Catalog Service (integration) | 20 |
 | Notification Service (unit) | 24 |
 | Notification Service (integration) | 16 |
 | Web (React Testing Library) | 17 |
@@ -351,7 +354,7 @@ Known limitations of the implementation:
 - [x] Source code and tests included; no secrets committed (`.env` is git-ignored).
 - [x] README reflects actual ports, environment variables, test commands and limitations.
 - [x] `AI_USAGE.md` and `TIME_SPENT.md` completed from actual evidence.
-- [x] Feature branches pushed and PRs opened into `main` (sequential PRs, ADR-017); the submission PR (#12) is left open.
+- [x] Feature branches pushed and PRs opened into `main` (sequential PRs, ADR-017); the submission PR (#13) is left open.
 
 ## Further work
 

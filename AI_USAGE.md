@@ -41,7 +41,7 @@ The following project files provide instructions or context to AI tools and shou
 | `ASSUMPTIONS.md` | Records interpretations of ambiguity and their status | Present; update when implementation evidence confirms or invalidates an assumption. |
 | `DECISIONS.md` | Records architectural decisions, alternatives, rationale and consequences | Present; change only through deliberate decision/change control. |
 | `PLAN.md` | Implementation phases, time targets, dependencies and exit gates | Present; update actual phase status and deviations during execution. |
-| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 13 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
+| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 16 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
 | `.github/workflows/ci.yml`, `codeql.yml`, `.github/dependabot.yml` | Automated verification on every PR | Added in PR #2 at the owner's request; E2E job added in PR 5. |
 
 `README.md`, `TIME_SPENT.md`, `PR_DESCRIPTION.md` and the detailed `docs/` contracts are execution/submission records. Update them from the real implementation and measured results rather than treating the planning documents as evidence that the work has been completed.
@@ -91,12 +91,22 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 | ~14:00 | *"can you setup and add all the relevant github CI/CD pipeline workflow actions in the PR2 only"* | Added CI (quality, integration with service containers, compose smoke), CodeQL and Dependabot to PR #2. CD to AWS was **not** automated: there is no AWS account or OIDC role, and the owner had asked for no deploys. Documented in the README. |
 | 14:33 | *"note all this TIME_SPEND and AI_USAGE"* | This section, the review/runtime records below and the `TIME_SPENT.md` checkpoint. |
 | 14:43 | *"we should only consider only the active time in the session, irrespective of how many agents are working, means the time we started and paused, and then resumed, until we finished, and the total time shouldn't exceed 180 mins."* | `TIME_SPENT.md` now counts session wall-clock time only: parallel agents add nothing, waiting inside the session counts, and there is a hard stop at 16:32:41 IST. |
+| 15:08 | *"pause the timespent"* | Clock stopped at 15:08:17; S-001 total 95 minutes. |
+| 15:30 | *"is there any API for checking the status of an enquiry, using enquiry ID instead of going into the database … if not there then build it"* | Confirmed none existed. Built `GET /api/catalog/enquiries/{enquiryId}` (ASM-035, ADR-019): business lifecycle only, no customer data, rate limited, `no-store`. Notification delivery internals stay private by design. Logged as S-002 in `TIME_SPENT.md`. |
+| 15:36 | *"raise PR and pause the session, stating that tokens limit reached and give me the PR link"* | PR #12 had already been merged before the status-API commit landed, so a new PR carries it. Session paused; the in-flight review of this change is recorded as incomplete. |
+| 15:48 | *"I will manually review it, and fix the open issues and finally log this session and let me know"* | The model had been switched to Claude Sonnet 5; only a status check ran before the owner switched back. |
+| 21:01 | *"resume the session now"* (model: Claude Opus 5.5) | S-003: RV6-02/RV6-03 fixed on PR #13, gates + E2E re-run, session logged and closed at 21:03:49. The owner reviews #13 manually. |
+| 21:31 | *"pr-reviewer on this PR"* | S-004: reviewer run on PR #13 (6013178058): docs-only CHANGES REQUIRED; RV7-01/RV7-02 fixed, optional 429 no-store assertion added; session closed at 21:35:57. |
+| 21:38 | *"is review initiated as per the PR instructions?"* | Answered honestly: the head `80f35ed` had no verdict, so §23 wasn't fully met. I offered a re-review instead of running it. |
+| 21:40 | *"yes, you have to do it automatically why are u asking me agiain"* | Re-review started immediately (S-005). REVIEW PASSED (6013202469). Saved a standing rule to memory: re-review automatically after every fix and never ask. |
 
 ### 4.7 Tooling and permission events
 
 - **Auto-mode safety checks (Claude Code):** (1) a multi-heredoc shell command was blocked because the checker could not rule out a dangerous removal. Nothing was deleted; the files were rewritten with the Write tool. (2) `git commit && git push` was blocked as an outward action until the owner approved. The local commit was then made separately.
+- **Blocked download (S-002):** the auto-mode classifier blocked `pnpm dlx @redocly/cli` (fetching an unvetted external package to lint `openapi.yaml`). Not worked around; the OpenAPI change was checked by reading it and by the implemented API tests instead.
 - **Owner-only actions:** all assessment PRs were merged by the owner, not the AI.
 - **Merge/fix race (PR #9):** the owner merged #9 at its reviewed head `3ebab07` (14:48 IST) while the implementer was preparing fixes for the reviewer's P3 findings. The fix commit `14deff9` was then pushed to the already-merged branch. The re-review caught that these fixes never reached `main` and had no CI run. Correction: the fixes ship in PR 5, which contains `14deff9`, and they get CI there. Lesson: tell the owner when a fix round is in progress, and check the PR state before pushing.
+- **Merge/fix race repeated (PR #12):** the owner merged #12 at `b4e86af` (15:27:29 IST) during the pause; the status-API commit `6d89558` was then pushed to the merged branch at 15:35, without checking the PR state first. The reviewer flagged it as RV6-01 (P1: feature not delivered, no CI). Correction: PR #13 carries the commit; CI ran there (6/6 green). The lesson from #9 had not been applied, so it is logged as AI mistake #14.
 - **Dependabot:** after CI landed, Dependabot opened #3, #8 and #10 (Node 22 → 26 base images, still open), #4–#6 (GitHub Actions bumps) and #11 (nginx 1.27 → 1.31). The owner merged #4–#6 and #11. The AI did not merge or modify any of them; it aligned `ci.yml` to the merged action versions and merged `main` into PR #12 to pick up #11.
 
 
@@ -126,6 +136,7 @@ During documentation preparation, the user clarified that edits must remain scop
 | 11 | 400 vs 422 mapping for enquiry validation | Reviewer RV2-03 | All schema failures returned 422; the contract says structural problems get 400 | Structural/field split (`be5ee15`) | API tests for both cases |
 | 12 | Enquiry form said "not sent" on any failure, including a gateway timeout where the enquiry may have been stored | Reviewer RV4-01 | Misleading result, which could prompt a duplicate enquiry; nginx also returned HTML for gateway errors | JSON gateway errors; "could not confirm" wording for 504/network (`14deff9`) | RTL test; live: Catalog stopped → JSON 504 with correlation id |
 | 13 | `AI_USAGE.md` recorded PR #9's focused re-review as "CHANGES REQUIRED … P1" | Final reviewer RV5-02 compared it with the published review body | The published review said *no P0/P1/P2 code findings*, plus a delivery gap; the record overstated severity | Restated as published; every §6 row was re-checked against `gh api …/reviews` | RV5 regression check |
+| 14 | Pushed the status-API commit to `test/e2e-docs` after PR #12 had been merged | Reviewer RV6-01 checked `git merge-base` and the check runs | The feature never reached `main` and CI never ran: the same race as #9, repeated | New PR #13 from `feat/enquiry-status-api`; check `gh pr view <n> --json state` before every push | CI 6/6 on #13 |
 
 Process issue: in one run the reviewer subagent checked out a commit inside the implementer's worktree, leaving it on a detached HEAD. No work was lost. Later review prompts required the reviewer to use its own worktree.
 
@@ -159,6 +170,9 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #9 | `14deff9` (pushed after merge) | Focused re-review (6011475023): fixes correct, **no P0/P1/P2 code findings**, but a delivery gap (not in `main`, no CI run) plus a new optional RV4-05 P3 | RV4-05: unvalidated correlation ID echoed into the gateway's JSON | Fixes carried into PR #12 with RV4-05; README table (RV4-04) corrected in #12 |
 | #12 submission | `22953d2` | CHANGES REQUIRED (6011496306), documentation only: no P0/P1, no code defects | RV5-01..04 P2 (time log not reconciled, a misstated review record, stale README text, missing next-steps section); RV5-05/06 P3; remaining risk: gateway 502 reported as "not sent" | Fixed in the following commit on #12; see that PR for the re-review |
 | #12 | `6fc219b` | **REVIEW PASSED** (6011518525): RV5-01..06 and the 502 risk resolved; no P0/P1/P2 | Non-blocking: PR #1 open-time precision; JSON error responses lack nosniff/CSP (cosmetic) | Closing docs commit (time row and these outcome rows only, disclosed in advance) |
+| #12 (post-merge) | `6d89558` (status API, pushed after #12 merged) | CHANGES REQUIRED (6011622896): **no code defects** in the API; RV6-01 P1 delivery gap (#12 already merged), RV6-02 P2 stale PR-status docs, RV6-03 P3 (no-store only on 200, write-wording 503, no 503 test) | Privacy, enumeration, service boundary and OpenAPI consistency verified (`$ref`s resolve via js-yaml) | RV6-01: PR #13; RV6-02/03 fixed on #13 in session S-003 |
+| #13 submission | `99ed537` | CHANGES REQUIRED (6013178058), **docs only, no code defects**; RV6-01..03 verified resolved; CI 6/6 | RV7-01 P2: PR #13 title/description on GitHub stale; RV7-02 P3: TIME_SPENT wall-clock row said "no pauses" | Fixed in S-004 (GitHub PR edited; TIME_SPENT row) |
+| #13 | `80f35ed` | **REVIEW PASSED** (6013202469): RV7-01/02 resolved, no findings, CI 6/6 | Non-blocking: inconsistent minute rounding (rule now stated); stale "no further re-review" row (fixed) | — |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 
@@ -179,6 +193,9 @@ Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.m
 | PR #9 focused re-review | `14deff9` | 108 s | 7 |
 | PR #12 final submission review | `22953d2` | 311 s | 29 |
 | PR #12 focused re-review | `6fc219b` | not reported separately | — |
+| Status API review (posted on #12) | `6d89558` | 144 s | 12 |
+| PR #13 review | `99ed537` | 209 s | 22 |
+| PR #13 focused re-review | `80f35ed` | ~90 s | — |
 
 Every reviewer finding was validated by the implementer against the code before it was fixed. None was rejected, and one non-blocking observation was voluntarily implemented (`7d78b0d`). Re-reviews were run against the exact new head SHA each time.
 

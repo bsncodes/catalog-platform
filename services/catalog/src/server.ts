@@ -51,7 +51,7 @@ async function waitForDependencies(): Promise<void> {
 
 async function main(): Promise<void> {
   await waitForDependencies();
-  const publicServer = createPublicApp({ logger, catalog, enquiries, pool, enquiryRateLimitPerMinute: config.ENQUIRY_RATE_LIMIT_PER_MINUTE, trustProxyHops: config.TRUST_PROXY_HOPS }).listen(config.PUBLIC_PORT);
+  const publicServer = createPublicApp({ logger, catalog, enquiries, pool, enquiryRateLimitPerMinute: config.ENQUIRY_RATE_LIMIT_PER_MINUTE, enquiryStatusRateLimitPerMinute: config.ENQUIRY_STATUS_RATE_LIMIT_PER_MINUTE, trustProxyHops: config.TRUST_PROXY_HOPS }).listen(config.PUBLIC_PORT);
   const internalServer = createInternalApp({ logger, enquiries, internalToken: config.INTERNAL_API_TOKEN }).listen(config.INTERNAL_PORT);
   outbox.start();
   logger.info({ publicPort: config.PUBLIC_PORT, internalPort: config.INTERNAL_PORT, provider: config.PRODUCT_PROVIDER }, 'catalog service started');

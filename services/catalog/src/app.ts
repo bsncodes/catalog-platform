@@ -12,7 +12,8 @@ import { correlationMiddleware, errorHandler, notFoundHandler } from './http/mid
 export interface AppDependencies {
   logger: Logger;
   catalog: CatalogService;
-  enquiries: Pick<EnquiryService, 'createEnquiry' | 'applyNotificationCallback'>;
+  enquiries: Pick<EnquiryService, 'createEnquiry' | 'applyNotificationCallback' | 'getEnquiryStatus'>;
+  enquiryStatusRateLimitPerMinute?: number;
   pool: Pick<Pool, 'query'>;
   enquiryRateLimitPerMinute: number;
   trustProxyHops: number;
@@ -42,14 +43,14 @@ export function createPublicApp(deps: AppDependencies): Express {
   });
 
   app.use('/api/catalog', productRoutes(deps.catalog));
-  app.use('/api/catalog', publicEnquiryRoutes(deps.enquiries, deps.enquiryRateLimitPerMinute));
+  app.use('/api/catalog', publicEnquiryRoutes(deps.enquiries, deps.enquiryRateLimitPerMinute, deps.enquiryStatusRateLimitPerMinute));
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;
 }
 
 /** Internal API: separate listener on the private network only; never routed by the Gateway. */
-export function createInternalApp(deps: Pick<AppDependencies, 'logger' | 'enquiries'> & { internalToken: string }): Express {
+export function createInternalApp(deps: { logger: Logger; enquiries: Pick<EnquiryService, 'applyNotificationCallback'>; internalToken: string }): Express {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());

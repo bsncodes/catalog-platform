@@ -260,6 +260,53 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /api/catalog/enquiries/{enquiryId}:
+    get:
+      tags: [Enquiries]
+      operationId: getEnquiryStatus
+      summary: Get an enquiry's business lifecycle status
+      description: >-
+        Read-only, PII-free view of the Catalog-owned lifecycle (RECEIVED, PROCESSED, RESOLVED) for the
+        enquiry ID returned at submission. Customer contact details and the message are never returned.
+        Email delivery and callback-retry state belong to Notification Service and are not exposed.
+        Rate limited per client IP (ENQUIRY_STATUS_RATE_LIMIT_PER_MINUTE, default 60). Response is `Cache-Control: no-store`.
+      parameters:
+        - name: enquiryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current lifecycle status.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/EnquiryStatusView'
+              example:
+                data:
+                  enquiryId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                  status: PROCESSED
+                  entity: { type: PRODUCT, id: '1', name: 'Fjallraven - Foldsack No. 1 Backpack, Fits 15 Laptops' }
+                  receivedAt: '2026-11-22T09:00:00.000Z'
+                  processedAt: '2026-11-22T09:00:02.000Z'
+                  resolvedAt: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /internal/catalog/enquiries/{enquiryId}/notification-status:
     patch:
       operationId: reportNotificationStatus
@@ -695,6 +742,38 @@ components:
     EnquiryStatus:
       type: string
       enum: [RECEIVED, PROCESSED, RESOLVED]
+
+    EnquiryStatusView:
+      type: object
+      additionalProperties: false
+      required: [enquiryId, status, entity, receivedAt, processedAt, resolvedAt]
+      properties:
+        enquiryId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/EnquiryStatus'
+        entity:
+          type: object
+          additionalProperties: false
+          required: [type, id, name]
+          properties:
+            type:
+              type: string
+              enum: [PRODUCT, CATEGORY]
+            id:
+              type: string
+            name:
+              type: string
+        receivedAt:
+          type: string
+          format: date-time
+        processedAt:
+          type: [string, 'null']
+          format: date-time
+        resolvedAt:
+          type: [string, 'null']
+          format: date-time
 
     CreateEnquiryResponse:
       type: object

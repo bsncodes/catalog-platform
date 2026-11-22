@@ -1,7 +1,9 @@
 # Catalog Platform — Time Spent
 
 **Version:** 1.0  
-**Status:** **Paused at 15:08:17 IST** by the owner — single continuous session 2026-11-22 13:32:41–15:08:17 IST. If work resumes, it will be logged as a new session row and added to the total.  
+**Status:** **Closed at 21:42:24 IST.** S-001 95 + S-002 6 + S-003 3 + S-004 5 + S-005 3 = **112 min** (exact sum 110 min 49 s). Pauses (15:08–15:30, 15:36–21:01, 21:03–21:31, 21:35–21:40) are not counted. A one-command status check at 15:48:57 during a pause did no project work and is not counted.
+
+**Rounding rule:** S-001 is the sum of its sub-rows, measured in whole minutes (exact 95 min 36 s). S-002 to S-005 are each rounded **up** to the next whole minute (conservative). The reported total is therefore at least the exact wall-clock sum.
 **Project:** AI-Native Engineer Code Challenge  
 **Planning baseline:** 180 minutes (from `PLAN.md`)  
 **Tracking rule:** Record measured time only; never copy target time into the actual column.
@@ -47,7 +49,7 @@ The targets below are copied from the approved phase allocation in `PLAN.md`. Ph
 | 5 | Testing and integration | 20 | Interleaved | — | See session log §4 |
 | 6 | PR and independent review | 15 | Interleaved | — | See session log §4 |
 | 7 | Final corrections and documentation | 10 | Interleaved | — | See session log §4 |
-| | **Total (13:32:41–15:08:17, paused)** | **180** | **95** | **-85** | **Within the 180-minute cap; hard stop was 16:32:41 IST** |
+| | **Total (S-001…S-005, pauses excluded)** | **180** | **112** | **-68** | **Within the 180-minute cap** |
 
 **Variance formula:** `Actual minutes − Target minutes`. A positive value is an overrun; a negative value is time saved. Do not report a total actual duration while any material execution time is untracked without clearly qualifying the total.
 
@@ -64,6 +66,10 @@ Add one row for each focused work session. Use additional rows when a phase span
 | S-001 (cont.) | 2026-11-22 | 6, 7 | 14:33 | 14:43 | 0 | 10 | Checkpoint at the owner's request ("note all this TIME_SPEND and AI_USAGE"): recorded owner directions, permission events, reviewer runtimes and this time log; adopted the owner's time-accounting rule. PR #7 awaiting owner merge (time counted); PRs 4–5 ready locally | Commits on `test/e2e-docs` |
 | S-001 (cont.) | 2026-11-22 | 3, 6, 7 | 14:43 | 15:01 | 0 | 17 | Owner merged #7; PR #9 opened, reviewed (REVIEW PASSED + optional P3s); owner merged #9 while its P3 fixes were being pushed, so the fixes were carried into #12; RV4-05 fixed; PR #12 opened; final review RV5 (docs-only CHANGES REQUIRED) addressed: time log reconciled, AI_USAGE corrected, README cleaned up, next steps added, gateway 502 treated as unknown outcome, E2E env fallback | PR #9 reviews 6011463722/6011475023; PR #12 review 6011496306; CI green on #12 incl. E2E |
 | S-001 (close) | 2026-11-22 | 6, 7 | 15:01 | 15:08 | 0 | 7 | Final focused re-review of #12 at `6fc219b`: REVIEW PASSED (6011518525), CI 6/6 green incl. E2E; closing docs commit (15:05:48); final summary to the owner; **clock paused at 15:08:17 on the owner's instruction** ("pause the timespent"). #12 left open for submission | PR #12 review 6011518525 |
+| S-002 | 2026-11-22 | 2, 5, 6 | 15:30:27 | 15:36:29 | 0 | 6 | Resumed at the owner's request: build an enquiry status API. `GET /api/catalog/enquiries/{enquiryId}` (PII-free lifecycle view), unit + integration + E2E + CI smoke coverage, contract docs (ASM-035, ADR-019); PR #12 had been merged by the owner before the status-API commit was pushed, so it ships in a new PR. **Session paused at 15:36:29 on the owner's instruction (reason given: token limit reached)**; the focused review of the status API was still running and its outcome is not recorded here | PR #12 commits after `b4e86af` |
+| S-003 | 2026-11-22 | 6, 7 | 21:01:11 | 21:03:49 | 0 | 3 | Resumed at the owner's instruction ("resume the session now") to fix the open status-API review findings on PR #13. RV6-03: `Cache-Control: no-store` on every status response (verified live on 404/400), read-specific 503 message, 503 tests (catalog unit 50). RV6-02: PR-status facts corrected (#12 merged at `b4e86af`, #13 is the open submission PR), ASM-035 CI evidence, AI mistake #14 (repeated merge/push race). Gates and E2E 5/5 re-run. Owner is reviewing #13 manually, so no reviewer subagent was run. Session closed | PR #13 commits after `2338924` |
+| S-004 | 2026-11-22 | 6, 7 | 21:31:43 | 21:35:57 | 0 | 5 | Owner asked for a `pr-reviewer` run on PR #13. Review 6013178058 on `99ed537`: CHANGES REQUIRED, docs only (no code defects); RV6-01..03 confirmed resolved; CI 6/6; all suites + E2E 5/5. Fixed RV7-01 (PR #13 title/description on GitHub updated) and RV7-02 (wall-clock row), plus the optional 429 no-store assertion. Session closed | PR #13 review 6013178058; commit after `99ed537` |
+| S-005 | 2026-11-22 | 6, 7 | 21:40:05 | 21:42:24 | 0 | 3 | Focused re-review of PR #13 at `80f35ed`, started automatically after the owner's correction ("you have to do it automatically"). Review 6013202469: **REVIEW PASSED**, no findings, CI 6/6. Recorded it, stated the rounding rule, updated the PR #13 body. Session closed | PR #13 review 6013202469 |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 
@@ -99,8 +105,8 @@ Complete this section using actual timestamps and links.
 | Catalogue experience completed | 2026-11-22 ~14:20 (frontend + gateway verified locally) | RTL 14/14; gateway curls; E2E steps 1–4 |
 | Enquiry-to-email happy path verified | 2026-11-22 ~14:11 (backend), ~14:24 (browser E2E) | Enquiry → Mailpit → PROCESSED locally; Playwright journey |
 | Failure and retry paths verified | 2026-11-22 ~14:12 | Notification integration tests (email failure, DLQ, callback retry after restart, circuit breaker) |
-| Assessment PRs opened | #1 13:47:56, #2 ~13:56, #7 ~14:19, #9 14:44, #12 (submission, left open) 14:53 | GitHub PRs |
-| Independent reviewer verdicts received | Every PR; latest: #12 final review 14:58 (docs-only CHANGES REQUIRED) | `AI_USAGE.md` §6 |
+| Assessment PRs opened | #1 13:47:56, #2 ~13:56, #7 ~14:19, #9 14:44, #12 14:53 (merged by owner 15:27:29), #13 15:36 (submission, left open) | GitHub PRs |
+| Independent reviewer verdicts received | Every PR; #12 final REVIEW PASSED at `6fc219b`; status-API review on `6d89558` (6011622896, no code defects) | `AI_USAGE.md` §6 |
 | Required corrections completed | 2026-11-22 15:01 (RV5 corrections; all earlier P2/P3 fixed per PR) | Commits on #12; `AI_USAGE.md` §6 |
 | Final verification completed | 2026-11-22 15:05: local gates at 15:01; final re-review REVIEW PASSED at `6fc219b`; CI 6/6 green | typecheck/lint/unit/integration/E2E; CI on #12 |
 
@@ -108,10 +114,10 @@ Complete this section using actual timestamps and links.
 
 | Metric | Actual result |
 |---|---|
-| Total active project time | **95 minutes** (13:32:41–15:08:17 IST; clock paused by the owner) |
-| Total wall-clock span | Same: one continuous session with no pauses (owner's rule, §4) |
-| Total breaks / unrelated interruptions | 0 before the pause; paused at 15:08:17 (time after the pause is not counted) |
-| Difference from 180-minute target | -85 minutes (under target) |
+| Total active project time | **112 minutes**: S-001 95 + S-002 6 + S-003 3 + S-004 5 + S-005 3 (exact 110 min 49 s) |
+| Total wall-clock span | 13:32:41–session close across S-001…S-004; only the in-session time is counted. Pauses between sessions (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05) are excluded (owner's rule, §4) |
+| Total breaks / unrelated interruptions | Four pauses (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05), excluded from the total |
+| Difference from 180-minute target | -68 minutes (under target) |
 | Phases completed within target | Phases ran interleaved; the whole plan finished inside the 180-minute cap |
 | Main causes of savings | Parallel work: the next service was built while each PR was under review. Shared contracts removed rework. Each reviewer finding was fixed while it was still small. |
 | Work deferred or left incomplete | No functional requirement incomplete. Deferred by design: CD to AWS, CloudWatch alarms, authenticated `RESOLVED` workflow, product cache, permanent-vs-transient email error classification (`DECISIONS.md` §9, README limitations) |
