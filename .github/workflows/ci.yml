@@ -106,6 +106,9 @@ jobs:
           test "$(curl -sf http://127.0.0.1:8080/api/catalog/products/featured | jq '.data.products | length')" = "5"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/health/ready)" = "404"
           test "$(curl -s -o /dev/null -w '%{http_code}' -X PATCH http://127.0.0.1:8080/internal/catalog/enquiries/x/notification-status)" = "404"
+          # Correlation ids: a safe caller value is propagated; an unsafe one is replaced by a generated id.
+          curl -s -D - -o /dev/null -H 'X-Correlation-ID: ci-corr-1' http://127.0.0.1:8080/api/catalog/categories | grep -qi '^x-correlation-id: ci-corr-1'
+          curl -s -D - -o /dev/null -H 'X-Correlation-ID: bad"value<x>' http://127.0.0.1:8080/api/catalog/categories | grep -qiE '^x-correlation-id: [0-9a-f]{32}'
           response=$(api --header 'Content-Type: application/json' \
             --post-data '{"entity":{"type":"PRODUCT","id":"3"},"customer":{"name":"CI Smoke","email":"ci@example.com","phone":"+919876543210"}}' \
             http://127.0.0.1:3000/api/catalog/enquiries)

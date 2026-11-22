@@ -95,7 +95,8 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 ### 4.7 Tooling and permission events
 
 - **Auto-mode safety checks (Claude Code):** (1) a multi-heredoc shell command was blocked because the checker could not rule out a dangerous removal. Nothing was deleted; the files were rewritten with the Write tool. (2) `git commit && git push` was blocked as an outward action until the owner approved. The local commit was then made separately.
-- **Owner-only actions:** PRs #1 and #2 were merged by the owner, not the AI.
+- **Owner-only actions:** all assessment PRs were merged by the owner, not the AI.
+- **Merge/fix race (PR #9):** the owner merged #9 at its reviewed head `3ebab07` (14:48 IST) while the implementer was preparing fixes for the reviewer's P3 findings. The fix commit `14deff9` was then pushed to the already-merged branch. The re-review caught that these fixes never reached `main` and had no CI run. Correction: the fixes ship in PR 5, which contains `14deff9`, and they get CI there. Lesson: tell the owner when a fix round is in progress, and check the PR state before pushing.
 - **Dependabot:** after CI landed, Dependabot opened #3 (Node 22 → 26 base image), #4–#6 (GitHub Actions major bumps). The AI did not merge or modify them. It recommended holding the untested Node 26 bump and left the decision to the owner.
 
 
@@ -151,7 +152,8 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #7 notification | `39b2f71` | CHANGES REQUIRED (6011373403) | RV3-01 P2, RV3-02/03 P3 | `872100b` |
 | #7 | `872100b` | REVIEW PASSED (6011398653) | Non-blocking: guard timeout released the email lease | `7d78b0d` (accepted voluntarily) |
 | #7 | `7d78b0d` | REVIEW PASSED (6011412047) | — | — |
-| #9 frontend/gateway | `3ebab07` | REVIEW PASSED with optional P3s (6011463722) | RV4-01 gateway HTML errors / misleading "not sent" on timeout; RV4-02 rating not announced to screen readers; RV4-03 silent 422; RV4-04 stale README table | `14deff9` (RV4-01..03); RV4-04 fixed in PR 5 |
+| #9 frontend/gateway | `3ebab07` | REVIEW PASSED with optional P3s (6011463722) | RV4-01 gateway HTML errors / misleading "not sent" on timeout; RV4-02 rating not announced to screen readers; RV4-03 silent 422; RV4-04 stale README table | Owner merged #9 at `3ebab07` (14:48 IST) before the fix commit was pushed |
+| #9 | `14deff9` (pushed after merge) | CHANGES REQUIRED (6011475023): fixes correct, but **not in `main`**; new RV4-05 P3 | P1: RV4-01..03 not merged; RV4-05 unvalidated correlation id echoed into gateway JSON | Fixes shipped via PR 5 (contains `14deff9`) + RV4-05 fix in PR 5; RV4-04 fixed in PR 5 |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 

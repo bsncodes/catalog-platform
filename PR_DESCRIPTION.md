@@ -9,8 +9,8 @@ Delivery was split into five sequential PRs into `main` at the project owner's r
 | [#1](https://github.com/bsncodes/catalog-platform/pull/1) | `chore/setup` | Workspace, shared contracts, PostgreSQL/ElasticMQ/Mailpit | `9ccbd8b` | CHANGES REQUIRED → fixed → REVIEW PASSED | Merged by owner |
 | [#2](https://github.com/bsncodes/catalog-platform/pull/2) | `feat/catalog-service` | Catalog Service, outbox, internal callback, CI/CodeQL/Dependabot | `03a53dd` | PASSED with P2s → fixed → CHANGES REQUIRED (RV2-06) → fixed → REVIEW PASSED | Merged by owner |
 | [#7](https://github.com/bsncodes/catalog-platform/pull/7) | `feat/notification-service` | Notification Service | `7d78b0d` | CHANGES REQUIRED → fixed → REVIEW PASSED → follow-up → REVIEW PASSED | Merged by owner |
-| [#9](https://github.com/bsncodes/catalog-platform/pull/9) | `feat/frontend-gateway` | React frontend + Nginx gateway | see PR | see PR | see PR |
-| PR 5 | `test/e2e-docs` | Playwright E2E, CI E2E job, final documentation | see PR | see PR | see PR |
+| [#9](https://github.com/bsncodes/catalog-platform/pull/9) | `feat/frontend-gateway` | React frontend + Nginx gateway | `3ebab07` | REVIEW PASSED with optional P3s; merged by owner at `3ebab07`. The P3 fixes (`14deff9`) were pushed after the merge, so they ship in PR 5, along with RV4-05 | Merged by owner |
+| PR 5 | `test/e2e-docs` | Playwright E2E, CI E2E job, RV4-01..05 fixes, final documentation | see PR | see PR | Open: proposed submission PR |
 
 PRs #3–#6 and #8 are Dependabot dependency updates, not part of the assessment implementation. The owner merged #4–#6 (GitHub Actions bumps); #3 and #8 (Node 26 base images) are open.
 
@@ -110,7 +110,7 @@ Not included. The Playwright suite exercises the UI against the running stack, a
 ## Independent PR review
 
 - **Reviewer:** Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, Claude Opus 5.5). It is the same model family as the implementer, so this is not a cross-model review.
-- **Findings:** P0: 0. P1: 0. P2: 6 (RV1-01, RV1-02, RV2-01, RV2-02, RV2-06, RV3-01), all fixed. P3: 8, all fixed or documented.
+- **Findings:** P0: 0. P1: 0. P2: 6 (RV1-01, RV1-02, RV2-01, RV2-02, RV2-06, RV3-01), all fixed. P3: 13 (incl. RV4-01..05), all fixed (RV4-01..05 via PR 5) or documented.
 - Verdicts were published as GitHub COMMENT reviews on each PR, with the reviewed SHA. No formal approval is claimed (the author and reviewer share an identity).
 - Finding-by-finding history: `AI_USAGE.md` §5–6 and each PR's conversation.
 
