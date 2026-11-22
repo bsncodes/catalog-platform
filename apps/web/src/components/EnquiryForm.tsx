@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactElement } from 'react';
 import { enquiryRequestSchema, ENQUIRY_LIMITS, type EnquiryEntityType } from '@catalog/contracts';
 import { api, ApiError } from '../api/client';
 
@@ -19,6 +19,13 @@ export function EnquiryForm({ entityType, entityId, entityName }: Props) {
   const [values, setValues] = useState<Record<Field, string>>({ name: '', email: '', phone: '', message: '' });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
+  // Acceptance criterion: the customer clicks "Enquire", then completes the subsequent form.
+  const [open, setOpen] = useState(false);
+  const nameInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) nameInput.current?.focus();
+  }, [open]);
 
   const toFieldErrors = (issues: Array<{ field: string; message: string }>): FieldErrors => {
     const result: FieldErrors = {};
@@ -95,11 +102,24 @@ export function EnquiryForm({ entityType, entityId, entityName }: Props) {
     'aria-describedby': errors[name] ? `enquiry-${name}-error` : undefined,
   });
 
+  const heading = `Enquire about ${entityType === 'PRODUCT' ? 'this product' : 'this category'}`;
+
+  if (!open) {
+    return (
+      <section className="enquiry enquiry--collapsed" aria-label={heading}>
+        <p>Interested? Ask our sales team about {entityType === 'PRODUCT' ? 'this product' : 'this category'}.</p>
+        <button type="button" className="button" onClick={() => setOpen(true)}>
+          Enquire
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section className="enquiry" aria-labelledby="enquiry-heading">
-      <h2 id="enquiry-heading">Enquire about {entityType === 'PRODUCT' ? 'this product' : 'this category'}</h2>
-      <form onSubmit={onSubmit} noValidate>
-        {field('name', 'Name', <input {...common('name')} type="text" autoComplete="name" required maxLength={ENQUIRY_LIMITS.nameMax} />)}
+      <h2 id="enquiry-heading">{heading}</h2>
+      <form id="enquiry-form" onSubmit={onSubmit} noValidate>
+        {field('name', 'Name', <input {...common('name')} ref={nameInput} type="text" autoComplete="name" required maxLength={ENQUIRY_LIMITS.nameMax} />)}
         {field('email', 'Email', <input {...common('email')} type="email" autoComplete="email" required maxLength={ENQUIRY_LIMITS.emailMax} />)}
         {field('phone', 'Phone', <input {...common('phone')} type="tel" autoComplete="tel" required maxLength={ENQUIRY_LIMITS.phoneMax} />)}
         {field('message', 'Message (optional)', <textarea {...common('message')} rows={4} maxLength={ENQUIRY_LIMITS.messageMax} />)}
