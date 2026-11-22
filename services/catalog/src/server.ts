@@ -1,7 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import type { Server } from 'node:http';
-import { SQSClient } from '@aws-sdk/client-sqs';
 import { loadConfig } from './config.js';
 import { createLogger } from './logger.js';
 import { createPool } from './db/pool.js';
@@ -13,6 +12,7 @@ import { EnquiryService } from './enquiries/enquiryService.js';
 import { OutboxRepository } from './outbox/outboxRepository.js';
 import { OutboxPublisher } from './outbox/outboxPublisher.js';
 import { SqsEventPublisher } from './outbox/eventPublisher.js';
+import { createSqsClient } from './outbox/sqsClient.js';
 import { createInternalApp, createPublicApp } from './app.js';
 
 const config = loadConfig();
@@ -27,14 +27,7 @@ const pool = createPool(config.DATABASE_URL, (error) => logger.error({ err: erro
 const catalog = new CatalogService(provider, config.FEATURED_PRODUCT_IDS);
 const enquiries = new EnquiryService(pool, catalog);
 
-// With a custom endpoint (ElasticMQ locally) route calls to that endpoint rather than the host in the queue URL.
-const sqs = new SQSClient({
-  region: config.SQS_REGION,
-  // Bounded calls: a hung SendMessage must fail (and be retried) rather than stall the outbox loop.
-  requestHandler: { connectionTimeout: 2000, requestTimeout: config.SQS_REQUEST_TIMEOUT_MS },
-  maxAttempts: 3,
-  ...(config.SQS_ENDPOINT ? { endpoint: config.SQS_ENDPOINT, useQueueUrlAsEndpoint: false } : {}),
-});
+const sqs = createSqsClient({ region: config.SQS_REGION, requestTimeoutMs: config.SQS_REQUEST_TIMEOUT_MS, ...(config.SQS_ENDPOINT ? { endpoint: config.SQS_ENDPOINT } : {}) });
 const sqsPublisher = new SqsEventPublisher(sqs, config.SQS_QUEUE_NAME);
 const outbox = new OutboxPublisher(new OutboxRepository(pool), sqsPublisher, logger.child({ component: 'outbox' }), {
   pollIntervalMs: config.OUTBOX_POLL_INTERVAL_MS,
