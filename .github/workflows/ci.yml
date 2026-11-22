@@ -74,7 +74,7 @@ jobs:
     timeout-minutes: 20
     needs: quality
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Prepare offline environment
         run: |
           cp .env.example .env
