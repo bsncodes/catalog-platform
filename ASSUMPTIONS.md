@@ -60,40 +60,40 @@ All entries in this initial register are marked `ACCEPTED` unless explicitly ide
 
 | ID | Area | Assumption | Impact | Status |
 |---|---|---|---|---|
-| ASM-001 | Featured products | Five homepage products are selected through backend configuration. | MEDIUM | ACCEPTED |
-| ASM-002 | Category ranking | Show up to five top-rated products per category. | MEDIUM | ACCEPTED |
-| ASM-003 | Category ranking | Break equal ratings by product ID ascending. | LOW | ACCEPTED |
-| ASM-004 | Search | Search title, description and category using case-insensitive partial matching. | MEDIUM | ACCEPTED |
-| ASM-005 | Search | Reject an empty or whitespace-only submitted search query. | LOW | ACCEPTED |
-| ASM-006 | Product details | Display the useful product fields supplied by the normalized provider model. | LOW | ACCEPTED |
-| ASM-007 | Enquiry form | Name, email and phone are required; message is optional. | MEDIUM | ACCEPTED |
-| ASM-008 | Category enquiry | Provide a category enquiry entry point on the category page as an approved extension. | MEDIUM | ACCEPTED |
-| ASM-009 | Entity validation | Validate the referenced product/category and retain an entity snapshot. | MEDIUM | ACCEPTED |
-| ASM-010 | Async acknowledgement | Return `202 Accepted` after enquiry and outbox commit; confirmation means received, not emailed. | HIGH | ACCEPTED |
-| ASM-011 | Email success | Provider acceptance is the success signal; inbox delivery confirmation is outside initial scope. | MEDIUM | ACCEPTED |
-| ASM-012 | Sales routing | Resolve recipients using server-side configuration by enquiry type. | MEDIUM | ACCEPTED |
-| ASM-013 | Email templates | Keep PRODUCT and CATEGORY email templates in Notification Service source code. | LOW | ACCEPTED |
-| ASM-014 | Product persistence | Use Fake Store API as the initial product source; persist enquiries, not a duplicate product catalogue. | MEDIUM | ACCEPTED |
-| ASM-015 | Provider failures | Surface provider errors; do not convert them into successful empty product results. | MEDIUM | ACCEPTED |
-| ASM-016 | Local infrastructure | Use local substitutes while keeping application integration AWS-compatible. | HIGH | ACCEPTED |
-| ASM-017 | Offline testing | Use a fixture-backed provider for deterministic tests and offline verification. | LOW | ACCEPTED |
-| ASM-018 | Database isolation | Separate service-owned logical databases and credentials; a shared local PostgreSQL container is acceptable. | HIGH | ACCEPTED |
-| ASM-019 | SQS queue type | Use SQS Standard Queue because strict message ordering is not required. | MEDIUM | ACCEPTED |
-| ASM-020 | Delivery semantics | Assume at-least-once message delivery and make consumers idempotent. | HIGH | ACCEPTED |
-| ASM-021 | Outbox publisher | Poll and safely claim committed unpublished outbox records. | HIGH | ACCEPTED |
-| ASM-022 | Retry settings | Use configurable initial retry and Circuit Breaker values; tune from observed behaviour. | MEDIUM | ACCEPTED |
-| ASM-023 | Callback retry | Persist pending Catalog callback work in Notification Service and retry independently. | HIGH | ACCEPTED |
-| ASM-024 | Enquiry resolution | Model `RESOLVED` but defer the sales dashboard and full sales authentication workflow. | MEDIUM | ACCEPTED |
-| ASM-025 | API errors | Use consistent error responses and standard HTTP status meanings. | MEDIUM | ACCEPTED |
-| ASM-026 | Catalogue pagination | Do not implement pagination in the initial proof of concept unless the upstream catalogue size makes it necessary. | LOW | ACCEPTED |
-| ASM-027 | Product caching | Do not introduce a separate product cache in the initial implementation. | LOW | ACCEPTED |
-| ASM-028 | Visual design | Use a clean, responsive and accessible default design; detailed brand styling is not supplied. | LOW | ACCEPTED |
-| ASM-029 | Customer access | Catalogue browsing and enquiry submission are public; protect internal service operations separately. | MEDIUM | ACCEPTED |
-| ASM-030 | Callback authentication | Protect the internal callback with private service connectivity and service-to-service authentication. | HIGH | ACCEPTED |
-| ASM-031 | Featured products | A configured featured product missing from the provider fails the request (502) instead of showing fewer than five. | LOW | IMPLEMENTED |
-| ASM-032 | Callback authentication | Implement ASM-030 as a shared bearer token on a separate internal listener (port 3001) that the Gateway never routes. | HIGH | IMPLEMENTED |
-| ASM-033 | Callback terminal state | Add a monitored terminal `FAILED` callback status for non-retryable rejections and exhausted callback retries. | MEDIUM | IMPLEMENTED |
-| ASM-034 | Duplicate email window | A crash after provider acceptance but before the ledger records `SENT` can resend one email on redelivery; this window is accepted, not eliminated. | MEDIUM | ACCEPTED |
+| ASM-001 | Featured products | Five homepage products are selected through backend configuration. | MEDIUM | VERIFIED |
+| ASM-002 | Category ranking | Show up to five top-rated products per category. | MEDIUM | VERIFIED |
+| ASM-003 | Category ranking | Break equal ratings by product ID ascending. | LOW | VERIFIED |
+| ASM-004 | Search | Search title, description and category using case-insensitive partial matching. | MEDIUM | VERIFIED |
+| ASM-005 | Search | Reject an empty or whitespace-only submitted search query. | LOW | VERIFIED |
+| ASM-006 | Product details | Display the useful product fields supplied by the normalized provider model. | LOW | VERIFIED |
+| ASM-007 | Enquiry form | Name, email and phone are required; message is optional. | MEDIUM | VERIFIED |
+| ASM-008 | Category enquiry | Provide a category enquiry entry point on the category page as an approved extension. | MEDIUM | VERIFIED |
+| ASM-009 | Entity validation | Validate the referenced product/category and retain an entity snapshot. | MEDIUM | VERIFIED |
+| ASM-010 | Async acknowledgement | Return `202 Accepted` after enquiry and outbox commit; confirmation means received, not emailed. | HIGH | VERIFIED |
+| ASM-011 | Email success | Provider acceptance is the success signal; inbox delivery confirmation is outside initial scope. | MEDIUM | IMPLEMENTED |
+| ASM-012 | Sales routing | Resolve recipients using server-side configuration by enquiry type. | MEDIUM | VERIFIED |
+| ASM-013 | Email templates | Keep PRODUCT and CATEGORY email templates in Notification Service source code. | LOW | VERIFIED |
+| ASM-014 | Product persistence | Use Fake Store API as the initial product source; persist enquiries, not a duplicate product catalogue. | MEDIUM | IMPLEMENTED |
+| ASM-015 | Provider failures | Surface provider errors; do not convert them into successful empty product results. | MEDIUM | VERIFIED |
+| ASM-016 | Local infrastructure | Use local substitutes while keeping application integration AWS-compatible. | HIGH | IMPLEMENTED |
+| ASM-017 | Offline testing | Use a fixture-backed provider for deterministic tests and offline verification. | LOW | VERIFIED |
+| ASM-018 | Database isolation | Separate service-owned logical databases and credentials; a shared local PostgreSQL container is acceptable. | HIGH | VERIFIED |
+| ASM-019 | SQS queue type | Use SQS Standard Queue because strict message ordering is not required. | MEDIUM | IMPLEMENTED |
+| ASM-020 | Delivery semantics | Assume at-least-once message delivery and make consumers idempotent. | HIGH | VERIFIED |
+| ASM-021 | Outbox publisher | Poll and safely claim committed unpublished outbox records. | HIGH | VERIFIED |
+| ASM-022 | Retry settings | Use configurable initial retry and Circuit Breaker values; tune from observed behaviour. | MEDIUM | VERIFIED |
+| ASM-023 | Callback retry | Persist pending Catalog callback work in Notification Service and retry independently. | HIGH | VERIFIED |
+| ASM-024 | Enquiry resolution | Model `RESOLVED` but defer the sales dashboard and full sales authentication workflow. | MEDIUM | IMPLEMENTED |
+| ASM-025 | API errors | Use consistent error responses and standard HTTP status meanings. | MEDIUM | VERIFIED |
+| ASM-026 | Catalogue pagination | Do not implement pagination in the initial proof of concept unless the upstream catalogue size makes it necessary. | LOW | IMPLEMENTED |
+| ASM-027 | Product caching | Do not introduce a separate product cache in the initial implementation. | LOW | IMPLEMENTED |
+| ASM-028 | Visual design | Use a clean, responsive and accessible default design; detailed brand styling is not supplied. | LOW | IMPLEMENTED |
+| ASM-029 | Customer access | Catalogue browsing and enquiry submission are public; protect internal service operations separately. | MEDIUM | IMPLEMENTED |
+| ASM-030 | Callback authentication | Protect the internal callback with private service connectivity and service-to-service authentication. | HIGH | VERIFIED |
+| ASM-031 | Featured products | A configured featured product missing from the provider fails the request (502) instead of showing fewer than five. | LOW | VERIFIED |
+| ASM-032 | Callback authentication | Implement ASM-030 as a shared bearer token on a separate internal listener (port 3001) that the Gateway never routes. | HIGH | VERIFIED |
+| ASM-033 | Callback terminal state | Add a monitored terminal `FAILED` callback status for non-retryable rejections and exhausted callback retries. | MEDIUM | VERIFIED |
+| ASM-034 | Duplicate email window | A crash after provider acceptance but before the ledger records `SENT` can resend one email on redelivery; this window is accepted, not eliminated. | MEDIUM | IMPLEMENTED |
 
 ---
 
@@ -103,7 +103,7 @@ All entries in this initial register are marked `ACCEPTED` unless explicitly ide
 
 **Source:** Original assessment, page 2; `SPEC.md`, FR-001.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment says five products have been chosen to be featured/top-rated, but does not specify how the business selection is stored or changed.
@@ -129,7 +129,7 @@ Featured merchandising is a business choice and should not be coupled to fronten
 
 **Source:** Original assessment, page 3; `SPEC.md`, FR-002.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment requires top-rated products and additional products for a category but does not state how many products belong in the top-rated section.
@@ -155,7 +155,7 @@ This provides a consistent experience with the homepage's five featured products
 
 **Source:** Original assessment, page 3; `SPEC.md`, FR-002.  
 **Impact:** LOW  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment does not define ordering when two products have the same rating.
@@ -178,7 +178,7 @@ Unit-test equal ratings and missing rating values.
 
 **Source:** Original assessment, page 3; `SPEC.md`, FR-003.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment requires text matching but does not define which product fields or matching rules are used.
@@ -201,7 +201,7 @@ Test title, description and category matches; case differences; partial matches;
 
 **Source:** Original assessment, page 3; `SPEC.md`, FR-003.  
 **Impact:** LOW  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment does not specify what happens when the customer submits an empty or whitespace-only search.
@@ -224,7 +224,7 @@ Test empty, whitespace-only and valid search queries.
 
 **Source:** Original assessment, page 3; `SPEC.md`, FR-004.  
 **Impact:** LOW  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment requires a product details page but does not enumerate every field to display.
@@ -247,7 +247,7 @@ Test rendering when optional rating/review data is absent and when an image fail
 
 **Source:** Original assessment, page 3; `SPEC.md`, FR-005.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment says customers provide contact details but does not list the exact fields.
@@ -272,7 +272,7 @@ Test missing fields, invalid email, invalid phone input, optional message and va
 
 **Source:** Approved project extension; `SPEC.md`, FR-006.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The original assessment requires product enquiries. Category enquiries were added to the project scope, but the original brief does not define where a customer initiates one.
@@ -295,7 +295,7 @@ Verify that a category enquiry references the selected category and uses the sam
 
 **Source:** Approved project design; `SPEC.md`, Sections 7 and 9.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment does not specify how the application proves that a referenced product or category exists when an enquiry is submitted, nor how it preserves historical context.
@@ -321,7 +321,7 @@ Test valid and invalid entity references and verify that the stored snapshot mat
 
 **Source:** Original assessment, page 3; approved event-driven design; `SPEC.md`, Sections 6 and 8.  
 **Impact:** HIGH  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The original assessment describes an email being sent and a Thank You message being shown, but does not prescribe whether the HTTP request waits for the email provider.
@@ -347,7 +347,7 @@ Test that a committed enquiry returns `202` and `RECEIVED`; test that database f
 
 **Source:** Approved project design; `SPEC.md`, Sections 7 and 11.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Ambiguity**  
 The phrase "email successfully sent" can mean provider acceptance or confirmed delivery into the recipient's inbox.
@@ -370,7 +370,7 @@ Test provider success and failure responses. Do not label a failed provider requ
 
 **Source:** Original assessment, page 3; approved project design; `SPEC.md`, Section 13.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment refers to a sales inbox but does not specify recipient-management rules or whether product and category enquiries go to different teams.
@@ -395,7 +395,7 @@ Test recipient selection for PRODUCT and CATEGORY and verify that customer-suppl
 
 **Source:** Approved project decision.  
 **Impact:** LOW  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment requires an email but does not prescribe how templates are stored or managed.
@@ -420,7 +420,7 @@ Unit-test subject, required content, text output and safe HTML rendering for bot
 
 **Source:** Original assessment, page 1; approved project design.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Ambiguity**  
 The assessment allows Fake Store API and does not require a product database. The project does require durable enquiry persistence for its approved event-driven flow.
@@ -445,7 +445,7 @@ Verify that product endpoints use the provider abstraction and that enquiry pers
 
 **Source:** Approved project design; `SPEC.md`, FR-004 and Section 8.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment does not define how the application behaves if Fake Store API is unavailable, slow or returns malformed data.
@@ -470,7 +470,7 @@ Test timeout, non-success upstream response, malformed response, missing product
 
 **Source:** Original assessment, page 2; approved project architecture.  
 **Impact:** HIGH  
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Ambiguity**  
 The assessment requires included infrastructure to be AWS-compatible and requires a reviewer to run the application locally, but does not prescribe local emulators.
@@ -504,7 +504,7 @@ Run the complete workflow through Docker Compose without AWS credentials. Verify
 
 **Source:** Approved project design.  
 **Impact:** LOW  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment permits Fake Store API but does not specify how automated tests remain deterministic when an external provider is unavailable.
@@ -527,7 +527,7 @@ Run the automated test suite with outbound network access disabled and verify th
 
 **Source:** Approved project architecture; `SPEC.md`, Section 9.  
 **Impact:** HIGH  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment does not prescribe database topology. The project requires separate data ownership for the two services.
@@ -552,7 +552,7 @@ Verify connection configuration and ensure each service's database user cannot a
 
 **Source:** Approved project architecture.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Ambiguity**  
 The assessment does not require message ordering or FIFO processing.
@@ -575,7 +575,7 @@ Test duplicate delivery and ensure processing correctness does not depend on glo
 
 **Source:** AWS SQS Standard Queue behaviour and approved project architecture.  
 **Impact:** HIGH  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment does not discuss duplicate message delivery or exactly-once processing.
@@ -601,7 +601,7 @@ Deliver the same event more than once and verify that an already-recorded succes
 
 **Source:** Approved Transactional Outbox design; `SPEC.md`, Section 10.  
 **Impact:** HIGH  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The specification requires background publication but does not prescribe the exact scheduling, polling interval or claiming implementation.
@@ -627,7 +627,7 @@ Test publisher crash/restart, SQS unavailable and duplicate publication scenario
 
 **Source:** Approved project design; `SPEC.md`, Section 12.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The assessment does not prescribe retry counts, backoff schedules or Circuit Breaker thresholds.
@@ -657,7 +657,7 @@ Test the Circuit Breaker states, timeout handling, bounded retries and eventual 
 
 **Source:** Approved project design; `SPEC.md`, Sections 9, 11 and 12.  
 **Impact:** HIGH  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The architecture requires callback recovery after a successful email send, but does not mandate a separate callback queue or a particular retry scheduler.
@@ -683,7 +683,7 @@ Send an email successfully, make Catalog Service unavailable, restart Notificati
 
 **Source:** Approved project scope; `SPEC.md`, Sections 7 and 23.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Ambiguity**  
 The project includes a `RESOLVED` lifecycle state, but the original assessment does not request a sales-management interface or user-management workflow.
@@ -706,7 +706,7 @@ Unit-test allowed and disallowed transitions, including the inability to resolve
 
 **Source:** Approved project design; `SPEC.md`, Sections 8 and 15.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The original assessment does not prescribe response-body schemas or exact HTTP mappings for every failure.
@@ -736,7 +736,7 @@ Test each documented error category and verify that stack traces, credentials an
 
 **Source:** Original assessment, pages 2–3; approved project scope.  
 **Impact:** LOW  
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Ambiguity**  
 The assessment does not specify pagination, page size or infinite scrolling.
@@ -759,7 +759,7 @@ Verify all expected products in the test fixture are available through category 
 
 **Source:** Approved project scope.  
 **Impact:** LOW  
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Ambiguity**  
 The assessment does not specify caching or freshness requirements for product data.
@@ -782,7 +782,7 @@ Verify that provider latency and failures are handled correctly without relying 
 
 **Source:** Original assessment, page 1.  
 **Impact:** LOW  
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Ambiguity**  
 The assessment says creative work is being done but does not provide the final visual identity or design assets.
@@ -805,7 +805,7 @@ Verify responsive layouts at common viewport sizes and test basic keyboard and f
 
 **Source:** Original assessment, pages 1–3; approved project scope.  
 **Impact:** MEDIUM  
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Ambiguity**  
 The assessment describes public catalogue browsing and customer enquiries but does not require customer registration or authentication.
@@ -828,7 +828,7 @@ Verify public catalogue and enquiry flows work without customer accounts and tha
 
 **Source:** Approved project security design; `SPEC.md`, Sections 8 and 15.  
 **Impact:** HIGH  
-**Status:** ACCEPTED
+**Status:** VERIFIED
 
 **Ambiguity**  
 The specification requires private service-to-service communication and authentication but does not prescribe the precise local and AWS authentication mechanism.
@@ -851,7 +851,7 @@ Test an authorized callback, missing/invalid credentials and attempts to reach t
 
 **Source:** ASM-001 validation clause; `docs/api-contracts.md` §2.1.
 **Impact:** LOW
-**Status:** IMPLEMENTED (covered by `services/catalog/test/catalogService.test.ts`)
+**Status:** VERIFIED (covered by `services/catalog/test/catalogService.test.ts`)
 
 **Ambiguity**
 The featured endpoint must return exactly five configured products, but the behaviour when a configured product no longer exists upstream is not specified.
@@ -871,7 +871,7 @@ Unit test: a configured id `999` yields 502 `FEATURED_PRODUCT_UNAVAILABLE`.
 
 **Source:** ASM-030; `docs/api-contracts.md` §4.1.
 **Impact:** HIGH
-**Status:** IMPLEMENTED (covered by `services/catalog/test/publicApi.test.ts`)
+**Status:** VERIFIED (covered by `services/catalog/test/publicApi.test.ts`)
 
 **Assumption**
 Catalog Service serves the internal callback on a separate HTTP listener (`INTERNAL_PORT`, default 3001) that the API Gateway never routes, and requires `Authorization: Bearer <INTERNAL_API_TOKEN>` compared in constant time. The public listener does not mount `/internal` at all. Locally the token comes from `.env`; in AWS it is a Secrets Manager secret injected into both ECS task definitions, and the internal listener is reachable only via private service connectivity (security group restricted to Notification Service). See `DECISIONS.md` ADR-018.
@@ -885,7 +885,7 @@ API tests: missing/wrong token → 401; valid token → 200; the public app retu
 
 **Source:** `CLAUDE.md` §11 ("or the callback enters an explicitly monitored terminal-failure state"); `docs/data-model.md` §4.1.
 **Impact:** MEDIUM
-**Status:** IMPLEMENTED (covered by `services/notification/test/integration/processor.test.ts`)
+**Status:** VERIFIED (covered by `services/notification/test/integration/processor.test.ts`)
 
 **Ambiguity**
 The data model lists callback statuses `NULL`, `PENDING` and `COMPLETED`, while `CLAUDE.md` allows an explicitly monitored terminal failure without naming it.
@@ -902,7 +902,7 @@ Tests: 404 → `FAILED`; max attempts → `FAILED`; 503 → `PENDING` with backo
 
 **Source:** `CLAUDE.md` §10–11 (at-least-once delivery; never resend because of a callback failure).
 **Impact:** MEDIUM
-**Status:** ACCEPTED
+**Status:** IMPLEMENTED
 
 **Assumption**
 SMTP/SES acceptance and the PostgreSQL ledger write cannot be made atomic. If the process crashes after the provider accepts the email but before `email_status = SENT` is committed, SQS redelivers the message and the email is sent again. The window is a few milliseconds and is accepted for this proof of concept. A callback failure never causes a resend, because `SENT` is committed before any callback attempt. A per-event email lease (`email_lease_until`) stops two concurrent consumers from both sending. If the processor's send guard times out while the provider call may still complete, the lease is **kept** (not cleared), so a redelivery cannot start a parallel send until the lease expires. A definite provider failure releases the lease so the retry can proceed.

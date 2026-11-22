@@ -2,7 +2,7 @@
 
 A responsive product catalogue with product discovery, search, product details and customer enquiries. The application is designed as a small proof of concept with replaceable product and email providers, a locally runnable workflow and an AWS-compatible target architecture.
 
-> **Documentation status:** This README is the pre-implementation baseline. The architecture and API paths below are approved design, not proof that the application has already been built. Before submission, the implementation engineer must replace every `VERIFY AFTER IMPLEMENTATION` marker with the actual ports, commands, environment variables and test results, then test the setup from a clean checkout. Do not claim a feature or command is working until it has been run successfully.
+> **Documentation status:** Updated to match the implemented and verified system (2026-11-22). Commands, ports and test results below were run during implementation; see *Testing and verification* and `TIME_SPENT.md`.
 
 ## Delivery status
 
@@ -122,7 +122,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-**VERIFY AFTER IMPLEMENTATION:** Run these exact commands from a clean checkout. Confirm migrations and local queues are initialized, all health checks become ready, and the complete browser workflow starts. If the actual startup command or required environment setup differs, update this section to match the verified implementation.
+Verified: GitHub Actions' *Docker Compose smoke test* and *End-to-end* jobs run exactly these commands on a fresh checkout for every PR. Migrations run as one-shot `catalog-migrate` / `notification-migrate` jobs, ElasticMQ creates the queue and DLQ from `infra/elasticmq/elasticmq.conf`, services wait for their dependencies, and the gateway becomes healthy once Catalog is ready. The first build takes a few minutes; later starts take seconds.
 
 ### Local URLs
 
@@ -158,7 +158,19 @@ Database roles and passwords are created only when the PostgreSQL volume is firs
 
 `.env.example` is the committed reference for local configuration. Copy it to `.env` and provide only local values. Never commit `.env`, passwords, tokens, API keys, production credentials or other secrets.
 
-**VERIFY AFTER IMPLEMENTATION:** Add a table here listing every required variable, its purpose, whether it is required locally and a safe example value. Keep variable names and defaults synchronized with the actual configuration schema and `.env.example`; do not invent or document unused variables.
+| Variable (`.env`) | Purpose | Local value |
+|---|---|---|
+| `POSTGRES_ADMIN_PASSWORD` | PostgreSQL superuser (container init and test-only access) | `local-admin-password` |
+| `CATALOG_DB_PASSWORD` / `NOTIFICATION_DB_PASSWORD` | Separate service roles `catalog_svc` / `notification_svc` | local placeholders |
+| `PRODUCT_PROVIDER` | `fakestore` (live Fake Store API) or `fixture` (offline snapshot) | `fakestore` |
+| `FEATURED_PRODUCT_IDS` | Exactly five distinct product IDs for the homepage (validated at startup) | `1,5,9,12,18` |
+| `ENQUIRY_RATE_LIMIT_PER_MINUTE` | Per-IP public enquiry rate limit | `10` |
+| `INTERNAL_API_TOKEN` | Bearer token for the internal Catalog callback (minimum 16 characters) | local placeholder |
+| `EMAIL_FROM`, `SALES_RECIPIENT_PRODUCT`, `SALES_RECIPIENT_CATEGORY` | Trusted, server-side email routing | `@example.com` addresses (captured by Mailpit) |
+| `GATEWAY_PORT`, `MAILPIT_UI_PORT`, `POSTGRES_HOST_PORT`, `SQS_HOST_PORT` | Host ports (Postgres/SQS/Mailpit bound to 127.0.0.1) | `8080`, `8025`, `55432`, `59324` |
+| `LOG_LEVEL` | pino log level | `info` |
+
+Each service validates its full configuration with Zod at startup and fails fast on invalid values (`services/*/src/config.ts`). Tuning variables have safe defaults and are optional: outbox polling and lease, SQS wait/visibility/max-receive, email send timeout, callback timeout/backoff/max attempts, and the circuit breaker threshold/open duration/probes. The SQS endpoint, SMTP host and internal URLs are set in `docker-compose.yml`.
 
 Expected configuration areas include:
 
@@ -246,7 +258,31 @@ Expected coverage includes:
 - Duplicate/stale callbacks and protection against regressing `RESOLVED`.
 - Critical frontend states and the end-to-end enquiry-to-email journey.
 
-**VERIFY AFTER IMPLEMENTATION:** Add the exact, runnable commands from the root `package.json` and workspace scripts for installing dependencies, running unit/API/integration/E2E tests, linting and TypeScript checks. Record which tests actually passed. Do not state that a test suite passes unless it has been run against the final relevant commit.
+### Commands
+
+Run from the repository root after `pnpm install` (Node 22+, pnpm 10.17):
+
+| Command | What it runs | Needs |
+|---|---|---|
+| `pnpm typecheck` | `tsc --noEmit` for contracts, both services, web and E2E (strict mode) | — |
+| `pnpm lint` | ESLint (typescript-eslint, `no-explicit-any` as error) | — |
+| `pnpm test` | Unit/API tests: contracts, Catalog (Supertest, fixture provider), Notification, web (React Testing Library) | — |
+| `pnpm test:integration` | Catalog + Notification against real PostgreSQL and ElasticMQ (isolated `*_it` databases, temporary queues) | `docker compose up -d postgres elasticmq` |
+| `pnpm test:e2e` | Playwright against the full stack through the gateway; checks Mailpit and both databases | `docker compose up -d --build` (`pnpm exec playwright install chromium` once) |
+
+### Results on the final commit
+
+| Suite | Tests |
+|---|---|
+| Contracts (unit) | 23 |
+| Catalog Service (unit/API) | 45 |
+| Catalog Service (integration) | 18 |
+| Notification Service (unit) | 24 |
+| Notification Service (integration) | 15 |
+| Web (React Testing Library) | 14 |
+| End-to-end (Playwright, desktop + mobile Chromium) | 5 |
+
+All of these pass locally, and GitHub Actions runs them on every PR (see *Continuous integration*). The integration and E2E tests cover the failure paths: email failure leaves the enquiry `RECEIVED`, retry exhaustion redrives to the DLQ, a callback failure is retried without resending the email (including after a simulated restart), the circuit breaker behaves correctly in all three states, duplicate and concurrent deliveries are handled, and `RESOLVED` is never regressed.
 
 ## Production architecture target
 
@@ -308,7 +344,7 @@ Before sending the repository to the reviewer:
 - [ ] Include source code and tests; do not commit secrets.
 - [ ] Update this README with actual ports, environment variables, test commands and remaining limitations.
 - [ ] Complete `AI_USAGE.md` and `TIME_SPENT.md` using actual evidence; do not fabricate tool usage, mistakes, test results, review outcomes or durations.
-- [ ] Push the implementation feature branch and create one PR targeting `main`.
+- [ ] Push each feature branch and open its PR targeting `main` (sequential PRs, ADR-017).
 - [ ] Leave the PR open and unmerged.
 - [ ] Record the actual independent PR review verdict and reviewed commit SHA; do not claim review completion before it occurs.
 
