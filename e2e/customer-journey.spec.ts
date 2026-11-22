@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mailpitMessageText, poll, searchMailpit, sql } from './support';
 
-test('customer browses, searches, views a product and submits an enquiry that is emailed and PROCESSED', async ({ page, baseURL }) => {
+test('customer browses, searches, views a product and submits an enquiry that is emailed and PROCESSED', async ({ page, baseURL, request }) => {
   const apiRequests: string[] = [];
   page.on('request', (request) => {
     if (['fetch', 'xhr'].includes(request.resourceType())) apiRequests.push(request.url());
@@ -65,8 +65,16 @@ test('customer browses, searches, views a product and submits an enquiry that is
   expect(message.Subject).toBe(`New product enquiry: ${title}`);
   expect(await mailpitMessageText(message.ID)).toContain(customerEmail);
 
-  // 8–9. Notification Service called the internal PATCH; Catalog persisted PROCESSED.
-  await poll(() => sql('catalog', `select status from catalog_enquiries where id = '${reference}'`), (v) => v === 'PROCESSED');
+  // 8–9. Notification Service called the internal PATCH; Catalog persisted PROCESSED — observed through the
+  // public status API via the gateway (what a customer or support agent would use), then confirmed in the DBs.
+  const statusBody = await poll(
+    async () => (await (await request.get(`/api/catalog/enquiries/${reference}`)).json()) as { data: { status: string; processedAt: string | null; entity: { name: string } } },
+    (b) => b.data.status === 'PROCESSED',
+  );
+  expect(statusBody.data.processedAt).not.toBeNull();
+  expect(statusBody.data.entity.name).toBe(title);
+  expect(JSON.stringify(statusBody)).not.toContain(customerEmail);
+  expect(sql('catalog', `select status from catalog_enquiries where id = '${reference}'`)).toBe('PROCESSED');
   expect(sql('notification', `select email_status || '/' || callback_status from notification_deliveries where enquiry_id = '${reference}'`)).toBe('SENT/COMPLETED');
   expect(sql('catalog', `select callback_result from processed_events where enquiry_id = '${reference}'`)).toBe('APPLIED');
 
@@ -74,7 +82,7 @@ test('customer browses, searches, views a product and submits an enquiry that is
   await expect(page.getByRole('heading', { name: 'Thank you for your enquiry' })).toBeVisible();
 });
 
-test('category enquiry is routed to the category sales inbox', async ({ page }) => {
+test('category enquiry is routed to the category sales inbox', async ({ page, request }) => {
   await page.goto('/categories/electronics');
   await page.getByLabel('Name').fill('Category Buyer');
   await page.getByLabel('Email').fill('buyer@example.com');
@@ -84,7 +92,7 @@ test('category enquiry is routed to the category sales inbox', async ({ page }) 
   const reference = (await page.getByText(/^Reference: /).textContent())?.replace('Reference: ', '').trim() ?? '';
   const mail = await poll(() => searchMailpit(reference), (r) => r.messages_count === 1);
   expect(mail.messages[0]!.To[0]!.Address).toBe('category-sales@example.com');
-  await poll(() => sql('catalog', `select status from catalog_enquiries where id = '${reference}'`), (v) => v === 'PROCESSED');
+  await poll(async () => ((await (await request.get(`/api/catalog/enquiries/${reference}`)).json()) as { data: { status: string } }).data.status, (v) => v === 'PROCESSED');
 });
 
 test('invalid enquiry input is rejected in the browser and nothing is submitted', async ({ page }) => {

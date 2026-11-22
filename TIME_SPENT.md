@@ -1,7 +1,7 @@
 # Catalog Platform — Time Spent
 
 **Version:** 1.0  
-**Status:** **Paused at 15:08:17 IST** by the owner — single continuous session 2026-11-22 13:32:41–15:08:17 IST. If work resumes, it will be logged as a new session row and added to the total.  
+**Status:** S-001 13:32:41–15:08:17 (paused by the owner); **S-002 resumed 15:30:27** for the enquiry status API. The gap 15:08–15:30 is a pause and is not counted.  
 **Project:** AI-Native Engineer Code Challenge  
 **Planning baseline:** 180 minutes (from `PLAN.md`)  
 **Tracking rule:** Record measured time only; never copy target time into the actual column.
@@ -64,6 +64,7 @@ Add one row for each focused work session. Use additional rows when a phase span
 | S-001 (cont.) | 2026-11-22 | 6, 7 | 14:33 | 14:43 | 0 | 10 | Checkpoint at the owner's request ("note all this TIME_SPEND and AI_USAGE"): recorded owner directions, permission events, reviewer runtimes and this time log; adopted the owner's time-accounting rule. PR #7 awaiting owner merge (time counted); PRs 4–5 ready locally | Commits on `test/e2e-docs` |
 | S-001 (cont.) | 2026-11-22 | 3, 6, 7 | 14:43 | 15:01 | 0 | 17 | Owner merged #7; PR #9 opened, reviewed (REVIEW PASSED + optional P3s); owner merged #9 while its P3 fixes were being pushed, so the fixes were carried into #12; RV4-05 fixed; PR #12 opened; final review RV5 (docs-only CHANGES REQUIRED) addressed: time log reconciled, AI_USAGE corrected, README cleaned up, next steps added, gateway 502 treated as unknown outcome, E2E env fallback | PR #9 reviews 6011463722/6011475023; PR #12 review 6011496306; CI green on #12 incl. E2E |
 | S-001 (close) | 2026-11-22 | 6, 7 | 15:01 | 15:08 | 0 | 7 | Final focused re-review of #12 at `6fc219b`: REVIEW PASSED (6011518525), CI 6/6 green incl. E2E; closing docs commit (15:05:48); final summary to the owner; **clock paused at 15:08:17 on the owner's instruction** ("pause the timespent"). #12 left open for submission | PR #12 review 6011518525 |
+| S-002 | 2026-11-22 | 2, 5, 6 | 15:30:27 | (in progress at 15:34) | 0 | — | Resumed at the owner's request: build an enquiry status API. `GET /api/catalog/enquiries/{enquiryId}` (PII-free lifecycle view), unit + integration + E2E + CI smoke coverage, contract docs (ASM-035, ADR-019); focused re-review on #12 | PR #12 commits after `b4e86af` |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 

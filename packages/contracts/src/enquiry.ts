@@ -65,6 +65,16 @@ export type EnquiryRequestInput = z.input<typeof enquiryRequestSchema>;
 export const ENQUIRY_STATUSES = ['RECEIVED', 'PROCESSED', 'RESOLVED'] as const;
 export type EnquiryStatus = (typeof ENQUIRY_STATUSES)[number];
 
+/** Public, PII-free view of an enquiry's business lifecycle (GET /api/catalog/enquiries/{enquiryId}). */
+export interface EnquiryStatusResponse {
+  enquiryId: string;
+  status: EnquiryStatus;
+  entity: { type: EnquiryEntityType; id: string; name: string };
+  receivedAt: string;
+  processedAt: string | null;
+  resolvedAt: string | null;
+}
+
 export interface EnquiryAcceptedResponse {
   enquiryId: string;
   status: 'RECEIVED';

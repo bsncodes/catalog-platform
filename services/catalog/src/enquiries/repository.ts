@@ -23,8 +23,29 @@ export interface EnquiryRow {
   resolved_at: Date | null;
 }
 
+export interface EnquiryStatusRow {
+  id: string;
+  status: EnquiryStatus;
+  entity_type: EnquiryEntityType;
+  entity_id: string;
+  entity_name: string;
+  received_at: Date;
+  processed_at: Date | null;
+  resolved_at: Date | null;
+}
+
 /** Data access for Catalog-owned enquiry tables. All SQL is parameterized. */
 export const enquiryRepository = {
+  /** Lifecycle fields only; customer contact details are deliberately not selected. */
+  async findStatus(db: Pick<PoolClient, 'query'>, id: string): Promise<EnquiryStatusRow | null> {
+    const result = await db.query<EnquiryStatusRow>(
+      `SELECT id, status, entity_type, entity_id, entity_snapshot->>'name' AS entity_name, received_at, processed_at, resolved_at
+         FROM catalog_enquiries WHERE id = $1`,
+      [id],
+    );
+    return result.rows[0] ?? null;
+  },
+
   async insertEnquiry(client: PoolClient, enquiry: NewEnquiry): Promise<void> {
     await client.query(
       `INSERT INTO catalog_enquiries

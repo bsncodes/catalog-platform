@@ -20,6 +20,7 @@ PRs #3–#6, #8, #10 and #11 are Dependabot dependency updates, not part of the 
 - **Two microservices** with separate databases. Catalog Service owns the catalogue, enquiries, lifecycle, Transactional Outbox and internal callback. Notification Service owns the SQS consumer, email delivery ledger, templates, callback retry and circuit breaker.
 - **AWS-compatible messaging:** AWS SDK v3 against ElasticMQ locally (SQS + DLQ in AWS). SMTP to Mailpit locally, with an Amazon SES adapter behind the same interface.
 - **Reliability:** atomic enquiry + outbox; at-least-once tolerant consumers; email never resent because of a callback failure; durable callback retries that survive restarts; `RESOLVED` never regressed.
+- **Enquiry status API:** `GET /api/catalog/enquiries/{enquiryId}` returns the lifecycle (`RECEIVED` / `PROCESSED` / `RESOLVED`) with timestamps, no customer data (ASM-035, ADR-019); added after the initial submission review at the owner's request.
 - **Local:** `cp .env.example .env && docker compose up --build` → http://localhost:8080, with emails visible at http://localhost:8025.
 
 ## Assessment acceptance criteria
@@ -76,10 +77,10 @@ Then open http://localhost:8080, submit an enquiry, and check http://localhost:8
 | Typecheck (strict) | `pnpm typecheck` | pass |
 | Lint | `pnpm lint` | pass |
 | Contracts | `pnpm test` | 23 |
-| Catalog unit/API | `pnpm test` | 45 |
+| Catalog unit/API | `pnpm test` | 48 |
 | Notification unit | `pnpm test` | 24 |
 | Web (React Testing Library) | `pnpm test` | 17 |
-| Catalog integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 18 |
+| Catalog integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 20 |
 | Notification integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 16 |
 | End-to-end (Playwright, full stack) | `pnpm test:e2e` | 5 |
 | GitHub Actions | quality, integration, compose smoke, CodeQL (from PR #2); E2E job (from PR #12) | green on PRs #2, #7, #9 and #12 (CI did not exist for PR #1) |

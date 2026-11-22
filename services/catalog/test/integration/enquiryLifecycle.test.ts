@@ -129,6 +129,37 @@ describe('internal notification-status callback', () => {
   });
 });
 
+describe('GET /api/catalog/enquiries/:enquiryId (ASM-035)', () => {
+  const statusOf = async (id: string) => request(publicApp()).get(`/api/catalog/enquiries/${id}`);
+
+  it('reports RECEIVED -> PROCESSED -> RESOLVED with timestamps and no customer data', async () => {
+    const { enquiryId, eventId } = await createEnquiry();
+    const received = await statusOf(enquiryId);
+    expect(received.status).toBe(200);
+    expect(received.body.data).toMatchObject({ enquiryId, status: 'RECEIVED', entity: { type: 'PRODUCT', id: '1', name: 'Fjallraven - Foldsack No. 1 Backpack, Fits 15 Laptops' }, processedAt: null, resolvedAt: null });
+    expect(Date.parse(received.body.data.receivedAt)).not.toBeNaN();
+
+    await callback(enquiryId, eventId);
+    const processed = (await statusOf(enquiryId)).body.data;
+    expect(processed.status).toBe('PROCESSED');
+    expect(processed.processedAt).not.toBeNull();
+
+    await enquiries.resolveEnquiry(enquiryId, 'sales-user-1');
+    const resolved = (await statusOf(enquiryId)).body.data;
+    expect(resolved.status).toBe('RESOLVED');
+    expect(resolved.resolvedAt).not.toBeNull();
+
+    const body = JSON.stringify(resolved);
+    for (const secret of ['jane@example.com', '+919876543210', 'Jane Doe', '<b>Hi</b>', 'sales-user-1']) expect(body).not.toContain(secret);
+  });
+
+  it('returns 404 ENQUIRY_NOT_FOUND for an unknown id', async () => {
+    const res = await statusOf(randomUUID());
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('ENQUIRY_NOT_FOUND');
+  });
+});
+
 describe('resolution domain operation', () => {
   it('rejects RECEIVED -> RESOLVED (must be PROCESSED first)', async () => {
     const { enquiryId } = await createEnquiry();
