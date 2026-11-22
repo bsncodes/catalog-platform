@@ -37,6 +37,7 @@ test('customer browses, searches, views a product and submits an enquiry that is
 
   // 5. Enquiry submission and Thank You confirmation.
   const customerEmail = `e2e-${Date.now()}@example.com`;
+  await page.getByRole('button', { name: 'Enquire' }).click();
   await page.getByLabel('Name').fill('E2E Customer');
   await page.getByLabel('Email').fill(customerEmail);
   await page.getByLabel('Phone').fill('+91 98765 43210');
@@ -84,6 +85,7 @@ test('customer browses, searches, views a product and submits an enquiry that is
 
 test('category enquiry is routed to the category sales inbox', async ({ page, request }) => {
   await page.goto('/categories/electronics');
+  await page.getByRole('button', { name: 'Enquire' }).click();
   await page.getByLabel('Name').fill('Category Buyer');
   await page.getByLabel('Email').fill('buyer@example.com');
   await page.getByLabel('Phone').fill('+919876543210');
@@ -101,6 +103,7 @@ test('invalid enquiry input is rejected in the browser and nothing is submitted'
     if (request.method() === 'POST') posted = true;
   });
   await page.goto('/products/1');
+  await page.getByRole('button', { name: 'Enquire' }).click();
   await page.getByLabel('Email').fill('not-an-email');
   await page.getByRole('button', { name: 'Send enquiry' }).click();
   await expect(page.getByText('Name is required.')).toBeVisible();

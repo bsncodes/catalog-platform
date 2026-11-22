@@ -15,7 +15,8 @@ Implementation is delivered as sequential pull requests into `main` (see `DECISI
 | 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | Merged (#7) |
 | 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | Merged (#9); P3 fixes carried in #12 |
 | 5 | `test/e2e-docs` | End-to-end verification, carried PR 4 fixes and final documentation | Merged (#12) |
-| 6 | `feat/enquiry-status-api` | Read-only enquiry status API (owner request after #12) | Open (#13, submission PR) |
+| 6 | `feat/enquiry-status-api` | Read-only enquiry status API (owner request after #12) | Merged (#13) |
+| 7 | `feat/final-submission` | Enquire button, time split, final submission docs | **Open: submission PR, leave unmerged** |
 
 Running the complete application:
 
@@ -283,7 +284,7 @@ Run from the repository root after `pnpm install` (Node 22+, pnpm 10.17):
 | Catalog Service (integration) | 20 |
 | Notification Service (unit) | 24 |
 | Notification Service (integration) | 16 |
-| Web (React Testing Library) | 17 |
+| Web (React Testing Library) | 18 |
 | End-to-end (Playwright, desktop + mobile Chromium) | 5 |
 
 All of these pass locally, and GitHub Actions runs them on every PR (see *Continuous integration*). The integration and E2E tests cover the failure paths: email failure leaves the enquiry `RECEIVED`, retry exhaustion redrives to the DLQ, a callback failure is retried without resending the email (including after a simulated restart), the circuit breaker behaves correctly in all three states, duplicate and concurrent deliveries are handled, and `RESOLVED` is never regressed.
@@ -354,7 +355,7 @@ Known limitations of the implementation:
 - [x] Source code and tests included; no secrets committed (`.env` is git-ignored).
 - [x] README reflects actual ports, environment variables, test commands and limitations.
 - [x] `AI_USAGE.md` and `TIME_SPENT.md` completed from actual evidence.
-- [x] Feature branches pushed and PRs opened into `main` (sequential PRs, ADR-017); the submission PR (#13) is left open.
+- [x] Feature branches pushed and PRs opened into `main` (sequential PRs, ADR-017); the final submission PR (`feat/final-submission`) is left open.
 
 ## Further work
 

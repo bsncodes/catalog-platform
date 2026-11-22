@@ -51,6 +51,7 @@ describe('Category page', () => {
     renderAt('/categories/electronics');
     expect(within(await screen.findByRole('list', { name: 'Top rated in electronics' })).getAllByRole('listitem')).toHaveLength(5);
     expect(within(screen.getByRole('list', { name: 'More in electronics' })).getAllByRole('listitem')).toHaveLength(1);
+    await userEvent.click(screen.getByRole('button', { name: 'Enquire' }));
     expect(screen.getByRole('heading', { name: 'Enquire about this category' })).toBeInTheDocument();
   });
 

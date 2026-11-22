@@ -1,9 +1,10 @@
 # Catalog Platform — Time Spent
 
 **Version:** 1.0  
-**Status:** **Closed at 21:42:24 IST.** S-001 95 + S-002 6 + S-003 3 + S-004 5 + S-005 3 = **112 min** (exact sum 110 min 49 s). Pauses (15:08–15:30, 15:36–21:01, 21:03–21:31, 21:35–21:40) are not counted. A one-command status check at 15:48:57 during a pause did no project work and is not counted.
+**Status:** S-006 in progress (from 21:50:55). Implementation total so far: S-001 95 + S-002 6 + S-003 3 + S-004 5 + S-005 3 + S-006 3 = **115 min**. Pauses are not counted. Pre-implementation preparation (about 180 min, owner's estimate) is reported separately in §5.
 
-**Rounding rule:** S-001 is the sum of its sub-rows, measured in whole minutes (exact 95 min 36 s). S-002 to S-005 are each rounded **up** to the next whole minute (conservative). The reported total is therefore at least the exact wall-clock sum.
+**Rounding rule:** S-001 is the sum of its sub-rows, measured in whole minutes (exact 95 min 36 s). S-002 onwards are each rounded **up** to the next whole minute (conservative). The reported total is therefore at least the exact wall-clock sum.
+
 **Project:** AI-Native Engineer Code Challenge  
 **Planning baseline:** 180 minutes (from `PLAN.md`)  
 **Tracking rule:** Record measured time only; never copy target time into the actual column.
@@ -49,7 +50,7 @@ The targets below are copied from the approved phase allocation in `PLAN.md`. Ph
 | 5 | Testing and integration | 20 | Interleaved | — | See session log §4 |
 | 6 | PR and independent review | 15 | Interleaved | — | See session log §4 |
 | 7 | Final corrections and documentation | 10 | Interleaved | — | See session log §4 |
-| | **Total (S-001…S-005, pauses excluded)** | **180** | **112** | **-68** | **Within the 180-minute cap** |
+| | **Total (S-001…S-006, pauses excluded)** | **180** | **115** | **-65** | **Within the 180-minute implementation cap** |
 
 **Variance formula:** `Actual minutes − Target minutes`. A positive value is an overrun; a negative value is time saved. Do not report a total actual duration while any material execution time is untracked without clearly qualifying the total.
 
@@ -70,6 +71,7 @@ Add one row for each focused work session. Use additional rows when a phase span
 | S-003 | 2026-11-22 | 6, 7 | 21:01:11 | 21:03:49 | 0 | 3 | Resumed at the owner's instruction ("resume the session now") to fix the open status-API review findings on PR #13. RV6-03: `Cache-Control: no-store` on every status response (verified live on 404/400), read-specific 503 message, 503 tests (catalog unit 50). RV6-02: PR-status facts corrected (#12 merged at `b4e86af`, #13 is the open submission PR), ASM-035 CI evidence, AI mistake #14 (repeated merge/push race). Gates and E2E 5/5 re-run. Owner is reviewing #13 manually, so no reviewer subagent was run. Session closed | PR #13 commits after `2338924` |
 | S-004 | 2026-11-22 | 6, 7 | 21:31:43 | 21:35:57 | 0 | 5 | Owner asked for a `pr-reviewer` run on PR #13. Review 6013178058 on `99ed537`: CHANGES REQUIRED, docs only (no code defects); RV6-01..03 confirmed resolved; CI 6/6; all suites + E2E 5/5. Fixed RV7-01 (PR #13 title/description on GitHub updated) and RV7-02 (wall-clock row), plus the optional 429 no-store assertion. Session closed | PR #13 review 6013178058; commit after `99ed537` |
 | S-005 | 2026-11-22 | 6, 7 | 21:40:05 | 21:42:24 | 0 | 3 | Focused re-review of PR #13 at `80f35ed`, started automatically after the owner's correction ("you have to do it automatically"). Review 6013202469: **REVIEW PASSED**, no findings, CI 6/6. Recorded it, stated the rounding rule, updated the PR #13 body. Session closed | PR #13 review 6013202469 |
+| S-006 | 2026-11-22 | 3, 5, 6, 7 | 21:50:55 | (in progress at 21:53:16) | 0 | 3 | Final submission PR: **Enquire** button (acceptance criterion, wording taken literally), owner's pre-implementation estimate recorded (§5), approximate time split (§5.2), new feature-branch PR into `main` left open, reviewer run | PR from `feat/final-submission` |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 
@@ -87,11 +89,47 @@ Add rows as required; do not leave placeholder rows in the final submitted recor
 
 Reviewer subagent runs: 13 runs in total (see `AI_USAGE.md` §6) (see `AI_USAGE.md` §6). They ran **in parallel** within the session's wall clock, so they add nothing to the total.
 
-## 5. Planning and Documentation Preparation
+## 5. Pre-Implementation Preparation (outside the 180-minute implementation window)
 
-The project documents `ASSUMPTIONS.md`, `DECISIONS.md`, `PLAN.md` and `AI_USAGE.md` have been prepared before implementation. Their existence is documented in the repository, but the time spent producing them was not measured with a reliable timer in this record.
+*Provided by the owner on 2026-11-22. This replaces the earlier "untracked" note. Tool: ChatGPT (GPT-6).*
 
-**Treatment:** Do not assign retrospective minute estimates to this preparation work. If reliable contemporaneous timestamps or tooling records are available, add a clearly labelled pre-execution session to the session log and include it in the total only if it falls within the assessment's measured time window. Otherwise, state that pre-execution documentation time is untracked and keep it separate from the measured implementation total.
+**Estimated preparation time: approximately 180 minutes (3 hours).** This covers substantive assessment analysis, requirements clarification, architecture discussions, technical decisions, planning and documentation preparation, all done with ChatGPT before the implementation session.
+
+| Activity | Estimated time |
+|---|---:|
+| Assessment analysis and requirements clarification | 20 min |
+| Architecture discussions, technical specification and `CLAUDE.md` | 30 min |
+| Assumptions, decisions and implementation planning | 20 min |
+| API contracts, OpenAPI, events and data model | 35 min |
+| Architecture, deployment, testing, security and observability documentation | 45 min |
+| Submission documents, revisions and PR reviewer agent | 30 min |
+| **Total** | **180 min** |
+
+- **Exclusions:** only genuinely non-productive or unrelated discussion has been excluded. Substantive clarifications, design discussions, reviews and revisions are included.
+- **Timebox treatment:** these approximately 180 minutes are reported separately and are **not** included in the 180-minute implementation timebox.
+- **Accuracy note:** this is a retrospective estimate based on the work completed, not a contemporaneously recorded duration. Unlike the implementation sessions in §4, it was not measured with the system clock.
+
+### 5.1 Overall time spent (for the assessment's "tell us how long you actually spent")
+
+| Part | Time | How it was measured |
+|---|---:|---|
+| Pre-implementation preparation (ChatGPT / GPT-6) | ~180 min | Owner's retrospective estimate (§5) |
+| Implementation, testing, review and submission (Claude Code) | **115 min** | System clock, sessions S-001…S-006 (§4) |
+| **Total** | **~295 min** | |
+
+### 5.2 Rough split of implementation time: planning, building, testing, reviewing
+
+The assessment asks for a rough split. The activities overlapped: services were built while earlier PRs were under review, and tests were written alongside the code. So this split is an **approximation derived from the session log and milestones**, not separately clocked.
+
+| Activity | Approx. minutes | What it covers |
+|---|---:|---|
+| Planning | ~5 | Repository inspection, plan adaptation, the PR-strategy decision (ADR-017) |
+| Building | ~52 | Contracts, both services, frontend, gateway, CI, status API, Enquire button |
+| Testing | ~24 | Unit, integration and E2E tests; local stack runs; live verification |
+| Reviewing | ~34 | Reviewer runs and their fixes, documentation and evidence, PR descriptions |
+| **Total** | **115** | Matches the measured implementation total |
+
+The ~180 minutes of preparation (§5) was mostly planning and documentation.
 
 ## 6. Milestone Timeline
 
@@ -114,11 +152,11 @@ Complete this section using actual timestamps and links.
 
 | Metric | Actual result |
 |---|---|
-| Total active project time | **112 minutes**: S-001 95 + S-002 6 + S-003 3 + S-004 5 + S-005 3 (exact 110 min 49 s) |
+| Total active project time | **115 minutes** implementation (S-001…S-006); plus about 180 min pre-implementation preparation reported separately (§5) |
 | Total wall-clock span | 13:32:41–session close across S-001…S-004; only the in-session time is counted. Pauses between sessions (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05) are excluded (owner's rule, §4) |
 | Total breaks / unrelated interruptions | Four pauses (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05), excluded from the total |
-| Difference from 180-minute target | -68 minutes (under target) |
-| Phases completed within target | Phases ran interleaved; the whole plan finished inside the 180-minute cap |
+| Difference from 180-minute target | -65 minutes (implementation; under target) |
+| Phases completed within target | Phases ran interleaved; approximate split in §5.2; everything finished inside the 180-minute cap |
 | Main causes of savings | Parallel work: the next service was built while each PR was under review. Shared contracts removed rework. Each reviewer finding was fixed while it was still small. |
 | Work deferred or left incomplete | No functional requirement incomplete. Deferred by design: CD to AWS, CloudWatch alarms, authenticated `RESOLVED` workflow, product cache, permanent-vs-transient email error classification (`DECISIONS.md` §9, README limitations) |
 
@@ -134,7 +172,7 @@ Complete this section using actual timestamps and links.
 - [x] All `Pending` placeholders replaced with measured values.
 - [x] Phase actuals reconcile with the session log (interleaved; the session total is authoritative).
 - [x] Total active time and variance from 180 minutes calculated.
-- [x] Pre-execution planning time (2026-11-21) is untracked and excluded from the total (§5).
+- [x] Pre-implementation preparation (about 180 min, owner's retrospective estimate) is reported separately and excluded from the implementation total (§5).
 - [x] Commits, tests and PR/reviewer evidence linked.
 - [x] Claims match `AI_USAGE.md`, the git history and the PRs.
 - [x] No placeholder session rows.

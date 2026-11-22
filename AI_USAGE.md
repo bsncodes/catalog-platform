@@ -17,7 +17,7 @@ The human owner remains responsible for the submitted source code, design decisi
 
 | Tool / model | Status | Intended or completed use | Evidence / notes |
 |---|---|---|---|
-| ChatGPT — GPT-6 | Used for planning and documentation in this preparation workflow | Requirements analysis, architecture clarification, and drafting the project records | Assisted with `ASSUMPTIONS.md`, `DECISIONS.md` and `PLAN.md`. The user reviewed the direction and corrected scope and document-editing expectations during the conversation. |
+| ChatGPT — GPT-6 | Used before implementation (about 180 min, owner's retrospective estimate; see `TIME_SPENT.md` §5) | Requirements analysis, architecture clarification, specification, `CLAUDE.md`, assumptions/decisions, API/event/data contracts, supporting docs and the PR reviewer agent definition | Assisted with `SPEC.md`, `PLAN.md`, `ASSUMPTIONS.md`, `DECISIONS.md`, `docs/` and `.claude/agents/pr-reviewer.md`. The owner reviewed the direction and corrected scope during the conversation. |
 | Claude Code (VS Code extension) — Claude Opus 5.5 (`claude-opus-5-5`) | Used, 2026-11-22 from 13:32 IST | Primary implementation engineer: repository inspection, all application code, tests, Docker/CI configuration, PR creation and documentation updates | One continuous session supervised by the project owner; see §7 and `TIME_SPENT.md`. |
 | Claude Code `pr-reviewer` subagent — `model: inherit` (Claude Opus 5.5) | Used on every PR | Independent, read-only review of each PR's real diff, published as GitHub COMMENT reviews | `.claude/agents/pr-reviewer.md` is committed. Same model family as the implementer, so this is an independent agent review, **not** a cross-model review. Evidence in §6. |
 | Additional specialist or external model reviewers | Not used | — | No external cross-model review was performed during implementation. |
@@ -99,6 +99,8 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 | 21:31 | *"pr-reviewer on this PR"* | S-004: reviewer run on PR #13 (6013178058): docs-only CHANGES REQUIRED; RV7-01/RV7-02 fixed, optional 429 no-store assertion added; session closed at 21:35:57. |
 | 21:38 | *"is review initiated as per the PR instructions?"* | Answered honestly: the head `80f35ed` had no verdict, so §23 wasn't fully met. I offered a re-review instead of running it. |
 | 21:40 | *"yes, you have to do it automatically why are u asking me agiain"* | Re-review started immediately (S-005). REVIEW PASSED (6013202469). Saved a standing rule to memory: re-review automatically after every fix and never ask. |
+| 21:44 | *"Did we complete all the things for our assignment?"* | First item-by-item check against the original brief PDF. Found three gaps: no open PR (#13 had been merged), no literal **Enquire** button, and no planning/building/testing/reviewing time split. |
+| 21:50 | Owner pasted their pre-implementation preparation estimate (about 180 min with ChatGPT GPT-6) | Recorded verbatim in `TIME_SPENT.md` §5, separate from the implementation timebox. S-006 also fixed the three gaps on a new PR that stays open. |
 
 ### 4.7 Tooling and permission events
 
@@ -137,6 +139,7 @@ During documentation preparation, the user clarified that edits must remain scop
 | 12 | Enquiry form said "not sent" on any failure, including a gateway timeout where the enquiry may have been stored | Reviewer RV4-01 | Misleading result, which could prompt a duplicate enquiry; nginx also returned HTML for gateway errors | JSON gateway errors; "could not confirm" wording for 504/network (`14deff9`) | RTL test; live: Catalog stopped → JSON 504 with correlation id |
 | 13 | `AI_USAGE.md` recorded PR #9's focused re-review as "CHANGES REQUIRED … P1" | Final reviewer RV5-02 compared it with the published review body | The published review said *no P0/P1/P2 code findings*, plus a delivery gap; the record overstated severity | Restated as published; every §6 row was re-checked against `gh api …/reviews` | RV5 regression check |
 | 14 | Pushed the status-API commit to `test/e2e-docs` after PR #12 had been merged | Reviewer RV6-01 checked `git merge-base` and the check runs | The feature never reached `main` and CI never ran: the same race as #9, repeated | New PR #13 from `feat/enquiry-status-api`; check `gh pr view <n> --json state` before every push | CI 6/6 on #13 |
+| 15 | Built from the derived `SPEC.md`/`CLAUDE.md` and never re-read the original brief PDF until the end | Owner asked whether everything was complete; the implementer then checked the PDF line by line | The Enquiry criterion says *click the Enquire button, then complete the subsequent form*, but the form was always shown. The brief asks for a planning/building/testing/reviewing time split, which was only given as "interleaved". | Added the Enquire button (collapsed → form, focus management, `aria-expanded`), RTL + E2E updated; added the time split (§5.2) | Web 18; E2E 5/5 |
 
 Process issue: in one run the reviewer subagent checked out a commit inside the implementer's worktree, leaving it on a detached HEAD. No work was lost. Later review prompts required the reviewer to use its own worktree.
 
