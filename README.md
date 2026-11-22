@@ -279,7 +279,7 @@ Run from the repository root after `pnpm install` (Node 22+, pnpm 10.17):
 | Catalog Service (integration) | 18 |
 | Notification Service (unit) | 24 |
 | Notification Service (integration) | 16 |
-| Web (React Testing Library) | 14 |
+| Web (React Testing Library) | 16 |
 | End-to-end (Playwright, desktop + mobile Chromium) | 5 |
 
 All of these pass locally, and GitHub Actions runs them on every PR (see *Continuous integration*). The integration and E2E tests cover the failure paths: email failure leaves the enquiry `RECEIVED`, retry exhaustion redrives to the DLQ, a callback failure is retried without resending the email (including after a simulated restart), the circuit breaker behaves correctly in all three states, duplicate and concurrent deliveries are handled, and `RESOLVED` is never regressed.

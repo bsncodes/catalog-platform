@@ -78,7 +78,7 @@ Then open http://localhost:8080, submit an enquiry, and check http://localhost:8
 | Contracts | `pnpm test` | 23 |
 | Catalog unit/API | `pnpm test` | 45 |
 | Notification unit | `pnpm test` | 24 |
-| Web (React Testing Library) | `pnpm test` | 14 |
+| Web (React Testing Library) | `pnpm test` | 16 |
 | Catalog integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 18 |
 | Notification integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 16 |
 | End-to-end (Playwright, full stack) | `pnpm test:e2e` | 5 |

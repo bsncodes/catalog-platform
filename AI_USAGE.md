@@ -121,6 +121,7 @@ During documentation preparation, the user clarified that edits must remain scop
 | 9 | Frontend toolchain: `@vitejs/plugin-react` 6 with Vite 7; `jsdom` 31 | Vitest startup errors | plugin-react 6 needs Vite 8; jsdom 31's undici 8 fails on the local Node 23.0 | plugin-react 5; pnpm override `jsdom: ^26.1.0` | 14 frontend tests green |
 | 10 | E2E read the `<h1>` immediately after clicking a product | E2E assertion: expected the homepage hero title | Race with client-side navigation | Wait for the product URL/details first | 5/5 E2E green |
 | 11 | 400 vs 422 mapping for enquiry validation | Reviewer RV2-03 | All schema failures returned 422; the contract says structural problems get 400 | Structural/field split (`be5ee15`) | API tests for both cases |
+| 12 | Enquiry form said "not sent" on any failure, including a gateway timeout where the enquiry may have been stored | Reviewer RV4-01 | Misleading result, which could prompt a duplicate enquiry; nginx also returned HTML for gateway errors | JSON gateway errors; "could not confirm" wording for 504/network (`14deff9`) | RTL test; live: Catalog stopped → JSON 504 with correlation id |
 
 Process issue: in one run the reviewer subagent checked out a commit inside the implementer's worktree, leaving it on a detached HEAD. No work was lost. Later review prompts required the reviewer to use its own worktree.
 
@@ -150,6 +151,7 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #7 notification | `39b2f71` | CHANGES REQUIRED (6011373403) | RV3-01 P2, RV3-02/03 P3 | `872100b` |
 | #7 | `872100b` | REVIEW PASSED (6011398653) | Non-blocking: guard timeout released the email lease | `7d78b0d` (accepted voluntarily) |
 | #7 | `7d78b0d` | REVIEW PASSED (6011412047) | — | — |
+| #9 frontend/gateway | `3ebab07` | REVIEW PASSED with optional P3s (6011463722) | RV4-01 gateway HTML errors / misleading "not sent" on timeout; RV4-02 rating not announced to screen readers; RV4-03 silent 422; RV4-04 stale README table | `14deff9` (RV4-01..03); RV4-04 fixed in PR 5 |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 
