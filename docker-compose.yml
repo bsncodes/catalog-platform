@@ -1,0 +1,45 @@
+# Local reviewer environment. Only the gateway and the Mailpit UI are meant for the browser;
+# PostgreSQL and ElasticMQ are bound to loopback for the integration-test suite only.
+name: catalog-platform
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set POSTGRES_ADMIN_PASSWORD in .env}
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD:?set CATALOG_DB_PASSWORD in .env}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?set NOTIFICATION_DB_PASSWORD in .env}
+    volumes:
+      - ./infra/postgres/init-databases.sh:/docker-entrypoint-initdb.d/10-init-databases.sh:ro
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-55432}:5432"
+    healthcheck:
+      # TCP checks against the service databases: only pass once the init script has created
+      # both roles/databases (the first-boot temporary server listens on the Unix socket only).
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U catalog_svc -d catalog && pg_isready -h 127.0.0.1 -U notification_svc -d notification"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  elasticmq:
+    image: softwaremill/elasticmq-native:1.6.12
+    volumes:
+      - ./infra/elasticmq/elasticmq.conf:/opt/elasticmq.conf:ro
+    ports:
+      - "127.0.0.1:${SQS_HOST_PORT:-59324}:9324"
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      # Loopback only: captured emails contain customer contact details.
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres-data:
