@@ -12,9 +12,12 @@ Delivery was split into five sequential PRs into `main` at the project owner's r
 | [#9](https://github.com/bsncodes/catalog-platform/pull/9) | `feat/frontend-gateway` | React frontend + Nginx gateway | `3ebab07` | REVIEW PASSED with optional P3s; merged by owner at `3ebab07`. The P3 fixes (`14deff9`) were pushed after the merge, so they ship in PR 5, along with RV4-05 | Merged by owner |
 | [#12](https://github.com/bsncodes/catalog-platform/pull/12) | `test/e2e-docs` | Playwright E2E, CI E2E job, carried RV4-01..05 fixes, final documentation | `6fc219b` | CHANGES REQUIRED (docs only) → corrected → **REVIEW PASSED** (6011518525); CI 6/6 green | Merged by owner at `b4e86af` (15:27:29 IST) |
 | [#13](https://github.com/bsncodes/catalog-platform/pull/13) | `feat/enquiry-status-api` | Enquiry status API `GET /api/catalog/enquiries/{enquiryId}` + RV6/RV7 fixes | `80f35ed` | Status API on `6d89558`: no code defects (6011622896) → RV6 fixed → 6013178058 docs-only CHANGES REQUIRED → RV7 fixed → **REVIEW PASSED** (6013202469); CI 6/6 | Merged by owner (21:45 IST) |
-| [#14](https://github.com/bsncodes/catalog-platform/pull/14) | `feat/final-submission` | **Enquire** button (literal acceptance criterion), approximate time split, pre-implementation time, final docs | see PR | see PR | **Open: submission PR, leave unmerged** |
+| [#14](https://github.com/bsncodes/catalog-platform/pull/14) | `feat/final-submission` | **Enquire** button (literal acceptance criterion), approximate time split, pre-implementation time, final docs | `376215f` | CHANGES REQUIRED (6013264748: RV9-01 P2, RV9-02/03 P3) → fixed → **REVIEW PASSED** (6013294742); CI 6/6 | Merged by owner (22:06:11 IST) |
+| Close-out | `docs/session-close-out` | S-006 time close-out, RV9 re-review record and non-blocking P3 wording | — | Docs only; not reviewed (the owner asked to close the session) | Merged by owner |
 
 PRs #3–#6, #8, #10 and #11 are Dependabot dependency updates, not part of the assessment implementation. The owner merged #4–#6 (GitHub Actions) and #11 (nginx 1.31); #3, #8 and #10 (Node 26 base images) are open.
+
+> **No PR is left open.** Every assessment PR was merged by the owner, which deviates from the brief's "leave it open". This was a deliberate owner decision (`DECISIONS.md` ADR-017, *Final state*). This file is the consolidated PR description.
 
 ## Summary
 
@@ -128,6 +131,7 @@ Next steps and growth beyond the PoC: `DECISIONS.md` §9.
 ## Final checklist
 
 - [x] Each PR targets `main` from its feature branch; the owner merges.
+- [ ] A PR is left open for submission. **Not met, by owner decision** (all merged; ADR-017 *Final state*).
 - [x] The five original acceptance criteria have evidence (above).
 - [x] Full source code and tests are included; no secrets are committed (`.env` is git-ignored; `.env.example` has local placeholders only).
 - [x] Setup verified from a clean checkout by the CI compose smoke and E2E jobs.

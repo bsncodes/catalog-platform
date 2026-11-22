@@ -678,6 +678,8 @@ Each PR receives its own `pr-reviewer` subagent review, published on that PR. Th
 - Review evidence and time spent are recorded per PR.
 - The single-PR wording in `CLAUDE.md` §21/§23 is superseded by this decision for this assessment; the rest of the review workflow (independent reviewer, published verdict, fix-and-re-review) still applies.
 
+**Final state and deviation from the brief (owner decision, 2026-11-22 22:06 IST):** every assessment PR, including the last submission PR #14, was merged by the owner. The brief asks for a feature-branch PR into `main` to be **left open**. With everything merged, **there is no open assessment PR**. The owner chose this knowingly: when offered a final open PR, they replied *"No, keep everything merged."* The PR descriptions of #1, #2, #7, #9, #12, #13 and #14, together with `PR_DESCRIPTION.md`, remain the review record.
+
 ---
 
 ### ADR-018 — Internal Callback Authentication: Separate Listener + Shared Bearer Token
