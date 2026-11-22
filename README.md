@@ -216,6 +216,21 @@ The initial request shape is:
 
 A successful enquiry submission returns `202 Accepted` after durable persistence. The customer-facing confirmation should say the enquiry was received, not claim that the sales email has already reached the inbox.
 
+## Continuous integration
+
+GitHub Actions run on every pull request to `main` and on pushes to `main`:
+
+| Workflow | Job | What it proves |
+|---|---|---|
+| `ci.yml` | Typecheck, lint and unit tests | `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` |
+| `ci.yml` | Integration tests | `pnpm test:integration` against PostgreSQL 17 and ElasticMQ service containers (outbox atomicity, claim/lease, SQS publish, callback idempotency) |
+| `ci.yml` | Docker Compose smoke test | Builds images, runs migrations via the one-shot job, waits for health, checks featured/category APIs and that an enquiry's outbox event is published to ElasticMQ (offline `fixture` provider) |
+| `codeql.yml` | CodeQL | `security-and-quality` static analysis for JavaScript/TypeScript (also weekly) |
+
+Dependabot (`.github/dependabot.yml`) proposes weekly npm, GitHub Actions and Docker base-image updates.
+
+**Continuous delivery is not automated.** Deploying to AWS (push images to ECR, update ECS Fargate services, sync the frontend to S3/CloudFront) needs an AWS account and a GitHub OIDC deploy role, which are outside the assessment's local-only scope (ADR-016). The intended pipeline is documented in `docs/deployment.md`; adding it is future work.
+
 ## Testing and verification
 
 Tests should cover the critical customer journey and important failure scenarios, not just isolated happy paths.
