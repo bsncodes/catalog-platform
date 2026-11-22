@@ -1,165 +1,129 @@
-# Catalog Platform — Pull Request
+# Catalog Platform — Pull Request Summary
 
-> **Authoring note — remove this note before publishing the PR:** This file is a template. Complete every placeholder using the implementation and verification evidence available at PR creation time. Delete sections that do not apply, but do not delete required disclosure of failed checks, incomplete requirements or known limitations. Never mark a requirement as complete without verifying it.
+Delivery was split into five sequential PRs into `main` at the project owner's request (`DECISIONS.md` ADR-017). This file summarises the whole submission. Each PR's own description carries its detailed verification.
 
 ## PR metadata
 
-- **Title:** `feat: build product catalogue and enquiry workflow`
-- **Base branch:** `main`
-- **Head branch:** `[feature branch name]`
-- **PR number / URL:** `[add after PR creation]`
-- **Head commit SHA reviewed:** `[add exact SHA for each review]`
-- **PR state:** `[verify that the PR is OPEN and UNMERGED]`
+| PR | Branch | Scope | Reviewed head | Review outcome | State |
+|---|---|---|---|---|---|
+| [#1](https://github.com/bsncodes/catalog-platform/pull/1) | `chore/setup` | Workspace, shared contracts, PostgreSQL/ElasticMQ/Mailpit | `9ccbd8b` | CHANGES REQUIRED → fixed → REVIEW PASSED | Merged by owner |
+| [#2](https://github.com/bsncodes/catalog-platform/pull/2) | `feat/catalog-service` | Catalog Service, outbox, internal callback, CI/CodeQL/Dependabot | `03a53dd` | PASSED with P2s → fixed → CHANGES REQUIRED (RV2-06) → fixed → REVIEW PASSED | Merged by owner |
+| [#7](https://github.com/bsncodes/catalog-platform/pull/7) | `feat/notification-service` | Notification Service | `7d78b0d` | CHANGES REQUIRED → fixed → REVIEW PASSED → follow-up → REVIEW PASSED | Merged by owner |
+| [#9](https://github.com/bsncodes/catalog-platform/pull/9) | `feat/frontend-gateway` | React frontend + Nginx gateway | `3ebab07` | REVIEW PASSED with optional P3s; merged by owner at `3ebab07`. The P3 fixes (`14deff9`) were pushed after the merge, so they ship in PR 5, along with RV4-05 | Merged by owner |
+| [#12](https://github.com/bsncodes/catalog-platform/pull/12) | `test/e2e-docs` | Playwright E2E, CI E2E job, carried RV4-01..05 fixes, final documentation | `6fc219b` | CHANGES REQUIRED (docs only) → corrected → **REVIEW PASSED** (6011518525); CI 6/6 green | **Open: submission PR** |
+
+PRs #3–#6, #8, #10 and #11 are Dependabot dependency updates, not part of the assessment implementation. The owner merged #4–#6 (GitHub Actions) and #11 (nginx 1.31); #3, #8 and #10 (Node 26 base images) are open.
 
 ## Summary
 
-[Describe what this pull request actually delivers in 3–6 concise bullets. Focus on the customer journey and the most important engineering work. Do not copy planned scope that was not implemented.]
-
-- [Delivered capability]
-- [Delivered capability]
-- [Delivered capability]
+- **Customer journey:** homepage with five backend-configured featured products, category browsing (top rated + additional), search, product details, and product and category enquiries with a Thank You confirmation.
+- **Two microservices** with separate databases. Catalog Service owns the catalogue, enquiries, lifecycle, Transactional Outbox and internal callback. Notification Service owns the SQS consumer, email delivery ledger, templates, callback retry and circuit breaker.
+- **AWS-compatible messaging:** AWS SDK v3 against ElasticMQ locally (SQS + DLQ in AWS). SMTP to Mailpit locally, with an Amazon SES adapter behind the same interface.
+- **Reliability:** atomic enquiry + outbox; at-least-once tolerant consumers; email never resent because of a callback failure; durable callback retries that survive restarts; `RESOLVED` never regressed.
+- **Local:** `cp .env.example .env && docker compose up --build` → http://localhost:8080, with emails visible at http://localhost:8025.
 
 ## Assessment acceptance criteria
 
-Record the result against the five original customer scenarios. Link to a test, screenshot, endpoint response or other reproducible evidence where possible.
-
 | Acceptance criterion | Status | Evidence |
 |---|---|---|
-| Homepage displays the five selected featured products. | `[PASS / PARTIAL / NOT IMPLEMENTED]` | `[test, screenshot or route]` |
-| Selecting a category displays top-rated and additional products in that category. | `[PASS / PARTIAL / NOT IMPLEMENTED]` | `[test, screenshot or route]` |
-| Submitting a search term displays only products whose text matches. | `[PASS / PARTIAL / NOT IMPLEMENTED]` | `[test, screenshot or route]` |
-| Selecting a product tile opens its product details page. | `[PASS / PARTIAL / NOT IMPLEMENTED]` | `[test, screenshot or route]` |
-| Submitting a product enquiry sends an email to the configured sales inbox and displays a Thank You message. | `[PASS / PARTIAL / NOT IMPLEMENTED]` | `[integration test and Mailpit evidence]` |
+| Homepage displays the five selected featured products. | PASS | `GET /api/catalog/products/featured` (config `FEATURED_PRODUCT_IDS`); `catalogService.test.ts`; `app.test.tsx`; E2E step 1 |
+| Selecting a category displays top-rated and additional products in that category. | PASS | `getCategoryProducts` ordering/dedup tests; RTL category test; E2E step 2 (women's clothing: 5 + 1) |
+| Submitting a search term displays only products whose text matches. | PASS | Case-insensitive title/description/category tests, blank `q` → 400; RTL search tests; E2E step 3 |
+| Selecting a product tile opens its product details page. | PASS | Product API tests (404/400/provider errors); RTL details test (incl. review count); E2E step 4 |
+| Submitting a product enquiry sends an email to the configured sales inbox and displays a Thank You message. | PASS | E2E: Thank You shown → enquiry + outbox persisted → SQS → email in Mailpit to `product-sales@example.com` → internal PATCH → `PROCESSED`; CI smoke repeats the asynchronous chain |
 
-Do not describe category enquiries as a substitute for the required product enquiry scenario. Record category enquiry support separately if implemented.
+Category enquiries (approved extension, ASM-008) reuse the same model and workflow and are routed to `category-sales@example.com` (E2E test 2).
 
 ## Architecture and implementation
 
-[Summarize the implementation as it exists in this PR. Mention only components and integrations that are present in the code.]
-
-Expected architecture reference (update if the implementation differs):
-
-```mermaid
-flowchart LR
-    U[Browser / React] --> G[API Gateway / Nginx]
-    G --> C[Catalog Service]
-    C --> DB[(Catalog PostgreSQL)]
-    C --> O[Transactional Outbox]
-    O --> Q[SQS / ElasticMQ]
-    Q --> N[Notification Service]
-    N --> M[Mailpit / Email Provider]
-    N -->|Internal status callback| C
-    N --> NDB[(Notification PostgreSQL)]
+```
+Browser ──► Nginx gateway :8080 ──► /api/catalog/* ──► Catalog Service :3000 (public)
+                │                                         │  PostgreSQL "catalog" (enquiries, outbox, processed_events)
+                └─ React SPA                              │  Outbox publisher ──► SQS queue (ElasticMQ) ──► DLQ
+                                                          ▲
+               Catalog internal :3001 (bearer token) ◄────┤ PATCH notification-status
+                                                          │
+                                   Notification Service ──┘  PostgreSQL "notification" (notification_deliveries)
+                                   (SQS consumer, templates, SMTP→Mailpit / SES, callback retry, circuit breaker)
 ```
 
-### Service responsibilities
-
-- **Frontend:** [Describe the implemented pages and customer interactions.]
-- **API Gateway:** [Describe the actual local routing and any production mapping documented.]
-- **Catalog Service:** [Describe actual catalogue, search, enquiry, persistence, outbox and lifecycle responsibilities.]
-- **Notification Service:** [Describe actual queue consumption, delivery ledger, email and callback responsibilities.]
-- **Product provider:** [Name the implemented provider and explain the adapter boundary.]
-- **Email provider:** [Name the implemented local provider and any production adapter boundary.]
-
-### Reliability and lifecycle behaviour
-
-Describe the verified behaviour for each case. Do not infer that a case works simply because the code path exists.
-
-| Scenario | Actual behaviour | Verification evidence |
-|---|---|---|
-| Enquiry accepted | `[explain when RECEIVED is persisted and what the customer confirmation means]` | `[test/evidence]` |
-| Email provider accepts the message | `[explain delivery-ledger and callback behaviour]` | `[test/evidence]` |
-| Email delivery fails | `[explain retry/DLQ handling and enquiry status]` | `[test/evidence]` |
-| Catalog callback fails after email acceptance | `[explain durable callback retry and how duplicate email is prevented]` | `[test/evidence]` |
-| Duplicate event or callback | `[explain idempotency and lifecycle protection]` | `[test/evidence]` |
+Details: `README.md`, `docs/architecture.md`, `docs/data-model.md`, `docs/event-contracts.md`.
 
 ## Key decisions and assumptions
 
-[Summarize only the decisions and assumptions that materially shaped this implementation. Explain any accepted simplification or deviation from the approved design.]
+- ADR-017: sequential PRs, the owner's decision; it supersedes the single-PR rule in `CLAUDE.md` §21.
+- ADR-018 / ASM-032: internal callback served on a separate listener, authenticated with a bearer token, never routed by the gateway.
+- ASM-031: a configured featured product missing upstream → explicit 502 rather than fewer than five.
+- ASM-033: terminal monitored `FAILED` callback status (non-retryable rejection or max attempts).
+- ASM-034: the duplicate-email window between provider acceptance and the ledger write is accepted, minimised by the email lease and enforced timeouts.
 
-Relevant project documents:
-
-- [`DECISIONS.md`](./DECISIONS.md)
-- [`ASSUMPTIONS.md`](./ASSUMPTIONS.md)
-- [`SPEC.md`](./SPEC.md)
-- [`PLAN.md`](./PLAN.md)
-- [`CLAUDE.md`](./CLAUDE.md)
-
-**Approved design deviations in this PR:** `[None, or list each deviation and its rationale. Update DECISIONS.md / ASSUMPTIONS.md where required.]`
+**Approved design deviations:** ADR-017 (PR strategy) only. The architecture is as specified in `SPEC.md`/`CLAUDE.md`.
 
 ## Local setup and reviewer instructions
 
-Follow [`README.md`](./README.md) for prerequisites, configuration and the exact startup procedure.
+```bash
+git clone https://github.com/bsncodes/catalog-platform.git && cd catalog-platform
+cp .env.example .env
+docker compose up --build
+```
 
-- **Verified startup command(s):** `[copy the exact command(s) that were run successfully from a clean checkout]`
-- **Frontend URL:** `[verified URL and port]`
-- **Mailpit URL:** `[verified URL and port]`
-- **Required local configuration:** `[list required non-secret variables; confirm .env.example is current]`
-- **Reviewer setup time:** `[measured or clearly labelled estimate; target is under 10 minutes]`
-
-The local workflow must not require AWS credentials, paid services or accounts that the reviewer must create. Do not commit `.env` files or secrets.
+Then open http://localhost:8080, submit an enquiry, and check http://localhost:8025. Set `PRODUCT_PROVIDER=fixture` in `.env` to run fully offline. No AWS account or credentials are required.
 
 ## Tests and verification
 
-Record exact commands, actual outcomes and relevant evidence. Include failures; do not report a check as passing if it was skipped, flaky or not run.
+| Suite | Command | Result |
+|---|---|---|
+| Typecheck (strict) | `pnpm typecheck` | pass |
+| Lint | `pnpm lint` | pass |
+| Contracts | `pnpm test` | 23 |
+| Catalog unit/API | `pnpm test` | 45 |
+| Notification unit | `pnpm test` | 24 |
+| Web (React Testing Library) | `pnpm test` | 17 |
+| Catalog integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 18 |
+| Notification integration (PostgreSQL + ElasticMQ) | `pnpm test:integration` | 16 |
+| End-to-end (Playwright, full stack) | `pnpm test:e2e` | 5 |
+| GitHub Actions | quality, integration, compose smoke, CodeQL (from PR #2); E2E job (from PR #12) | green on PRs #2, #7, #9 and #12 (CI did not exist for PR #1) |
 
-| Verification | Exact command / method | Result | Evidence / notes |
-|---|---|---|---|
-| Unit tests | `[command]` | `[PASS / FAIL / NOT RUN]` | `[summary or CI link]` |
-| Backend API / integration tests | `[command]` | `[PASS / FAIL / NOT RUN]` | `[summary or CI link]` |
-| Frontend tests | `[command]` | `[PASS / FAIL / NOT RUN]` | `[summary or CI link]` |
-| TypeScript type checking | `[command]` | `[PASS / FAIL / NOT RUN]` | `[summary or CI link]` |
-| Lint | `[command]` | `[PASS / FAIL / NOT RUN]` | `[summary or CI link]` |
-| Docker Compose clean-start verification | `[exact commands and clean-checkout procedure]` | `[PASS / FAIL / NOT RUN]` | `[startup logs / screenshot]` |
-| End-to-end enquiry-to-email flow | `[method]` | `[PASS / FAIL / NOT RUN]` | `[Mailpit/test evidence]` |
-| Email-failure behaviour | `[method]` | `[PASS / FAIL / NOT RUN]` | `[test/evidence]` |
-| Callback-retry behaviour without email resend | `[method]` | `[PASS / FAIL / NOT RUN]` | `[test/evidence]` |
-| Duplicate event / callback handling | `[method]` | `[PASS / FAIL / NOT RUN]` | `[test/evidence]` |
-
-**Overall verification summary:** `[Summarize what passed, failed, was skipped and remains unverified.]`
+Critical failure paths covered by tests:
+- email failure leaves the enquiry `RECEIVED`
+- exhausted retries go to the DLQ (real ElasticMQ redrive)
+- a callback failure is retried without resending the email, including after a simulated restart
+- circuit breaker CLOSED / OPEN / HALF_OPEN
+- duplicate and concurrent deliveries send one email
+- duplicate and stale callbacks never regress `RESOLVED`
+- outbox atomic rollback, concurrent claims and lease recovery
+- a hung SQS endpoint or email provider times out
 
 ## Screenshots or recordings
 
-[Add relevant screenshots, short recordings or links that demonstrate the customer-facing pages and enquiry confirmation. Do not include secrets or real customer personal data. Remove this section if no visual evidence is available.]
+Not included. The Playwright suite exercises the UI against the running stack, and traces are uploaded by CI on failure.
 
 ## Known limitations and deferred work
 
-[List only real limitations that remain in this PR. Include the user or operational impact and, where useful, a likely next step. If there are none, say so only after checking.]
+- **No CD:** deployment to AWS (ECR/ECS/S3/CloudFront) needs an AWS account and an OIDC role (ADR-016). The pipeline is documented, not automated.
+- **No sales UI or authentication:** `RESOLVED` exists only as a domain operation (`resolveEnquiry`), with no public route (ASM-024).
+- **Alerting is log-based:** `callback_status = FAILED` and DLQ depth are logged/queryable; CloudWatch alarms are future work.
+- **Duplicate-email window:** a crash between provider acceptance and the ledger commit can resend one email (ASM-034).
+- **No caching:** products are fetched from the provider per request (ASM-027).
+- **Frontend bundle:** includes all of Zod (about 50 kB gzip).
+- **Email provider errors are all treated as retryable** (permanent rejections still use the SQS retries).
 
-- `[Limitation / deferred requirement — impact — next step]`
-
-Do not hide failed tests, incomplete acceptance criteria, unsupported local-emulator behaviour or unimplemented reliability paths in this section.
+Next steps and growth beyond the PoC: `DECISIONS.md` §9.
 
 ## Independent PR review
 
-Complete this section after the reviewer subagent has inspected the actual PR diff. Do not fill it with a self-review or an anticipated result.
-
-- **Reviewer:** `[actual reviewer agent/model identity]`
-- **Reviewed PR head SHA:** `[exact SHA]`
-- **Review verdict:** `[CHANGES REQUIRED / REVIEW PASSED / NOT YET COMPLETED]`
-- **GitHub review/comment link:** `[actual URL]`
-- **P0 findings:** `[count and disposition]`
-- **P1 findings:** `[count and disposition]`
-- **P2 findings:** `[count and disposition]`
-- **P3 findings:** `[count and disposition]`
-- **Corrections pushed to this PR:** `[list commits/findings or None]`
-- **Re-review SHA and result:** `[exact SHA and actual outcome, or Not performed]`
-
-When the author and reviewer use the same GitHub identity, describe the outcome as a review comment/verdict, not a formal GitHub approval. P0 and P1 findings must be resolved before submission; applicable P2 findings must be resolved or explicitly documented.
+- **Reviewer:** Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, Claude Opus 5.5). It is the same model family as the implementer, so this is not a cross-model review.
+- **Findings:** P0: 0. P1: 0. P2: 6 (RV1-01, RV1-02, RV2-01, RV2-02, RV2-06, RV3-01), all fixed. P3: 13 (incl. RV4-01..05), all fixed (RV4-01..05 via PR 5) or documented.
+- Verdicts were published as GitHub COMMENT reviews on each PR, with the reviewed SHA. No formal approval is claimed (the author and reviewer share an identity).
+- Finding-by-finding history: `AI_USAGE.md` §5–6 and each PR's conversation.
 
 ## Final checklist
 
-- [ ] This PR targets `main` from the assessment feature branch.
-- [ ] The PR remains open and unmerged.
-- [ ] The five original acceptance criteria have an honest status and evidence.
-- [ ] Full source code and tests are included; no secrets are committed.
-- [ ] README setup instructions were verified from a clean checkout.
-- [ ] Tests, type checking and lint have actual recorded outcomes.
-- [ ] Known limitations and deferred work are disclosed.
-- [ ] `AI_USAGE.md` and `TIME_SPENT.md` reflect actual work.
-- [ ] The independent reviewer has published a verdict on this PR, or the review is explicitly recorded as incomplete.
-- [ ] Review corrections are pushed to this same PR and affected checks have been rerun.
-
----
-
-**Submission note:** The assessment requires the repository link and an open, unmerged feature-branch PR. This description is part of the assessment; keep it accurate, concise and defensible in the follow-up interview.
+- [x] Each PR targets `main` from its feature branch; the owner merges.
+- [x] The five original acceptance criteria have evidence (above).
+- [x] Full source code and tests are included; no secrets are committed (`.env` is git-ignored; `.env.example` has local placeholders only).
+- [x] Setup verified from a clean checkout by the CI compose smoke and E2E jobs.
+- [x] Tests, type checking and lint have recorded outcomes.
+- [x] Known limitations are disclosed.
+- [x] `AI_USAGE.md` and `TIME_SPENT.md` reflect actual work.
+- [x] The independent reviewer published a verdict on every PR. Corrections were pushed to the same PR and re-reviewed, except for #9: it was merged at its reviewed head before the P3 fix commit landed, so those fixes are carried and re-reviewed in #12.

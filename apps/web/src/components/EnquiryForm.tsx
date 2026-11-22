@@ -47,18 +47,18 @@ export function EnquiryForm({ entityType, entityId, entityName }: Props) {
       const accepted = await api.submitEnquiry(payload);
       setStatus({ kind: 'success', enquiryId: accepted.enquiryId });
     } catch (error) {
-      if (error instanceof ApiError && error.status === 422 && error.code === 'VALIDATION_ERROR') {
-        setErrors(toFieldErrors(error.details));
-        setStatus({ kind: 'idle' });
+      if (error instanceof ApiError && error.status === 422) {
+        const fieldErrors = toFieldErrors(error.details);
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors(fieldErrors);
+          setStatus({ kind: 'idle' });
+          return;
+        }
+        // Nothing maps to a visible field: never fail silently.
+        setStatus({ kind: 'error', message: `Your enquiry was not sent. ${error.message}` });
         return;
       }
-      const message =
-        error instanceof ApiError && error.status === 429
-          ? 'You have sent several enquiries in a short time. Please wait a minute and try again.'
-          : error instanceof Error
-            ? `Your enquiry was not sent. ${error.message}`
-            : 'Your enquiry was not sent. Please try again.';
-      setStatus({ kind: 'error', message });
+      setStatus({ kind: 'error', message: failureMessage(error) });
     }
   };
 
@@ -114,4 +114,20 @@ export function EnquiryForm({ entityType, entityId, entityName }: Props) {
       </form>
     </section>
   );
+}
+
+/**
+ * A timeout or lost connection means the outcome is unknown: the enquiry may have been stored.
+ * Say so instead of claiming it was not sent, to avoid misleading the customer into duplicates.
+ */
+function failureMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 429) return 'You have sent several enquiries in a short time. Please wait a minute and try again.';
+    // 502/504 from the gateway or a lost connection: the request may have been committed.
+    if (error.status === 504 || error.status === 502 || error.status === 0) {
+      return 'We could not confirm whether your enquiry was received. Please wait a minute before sending it again; if you do not hear from us, resubmit it.';
+    }
+    return `Your enquiry was not sent. ${error.message}`;
+  }
+  return 'Your enquiry was not sent. Please try again.';
 }

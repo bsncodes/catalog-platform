@@ -789,3 +789,34 @@ The application uses PostgreSQL for service-owned persistence, the Transactional
 The frontend communicates only through the API Gateway. Locally, the complete core workflow runs with Docker Compose, Nginx, PostgreSQL, ElasticMQ and Mailpit. The production target maps to AWS managed services.
 
 The architecture is intentionally limited to what supports the original assessment and the approved future-change boundaries. Additional services, infrastructure and product features must be justified by a concrete requirement rather than added for appearance.
+
+---
+
+## 9. Next Steps: With Another Day and Beyond the Proof of Concept
+
+What was deliberately simplified, and what would come next, in priority order. Each item builds on an existing seam in the code; none needs the service boundaries redesigned.
+
+### 9.1 With another day (highest value first)
+
+1. **Operational alerting.** CloudWatch metric filters and alarms on `callback_status = 'FAILED'`, DLQ `ApproximateNumberOfMessagesVisible > 0`, outbox rows unpublished for more than N minutes, and circuit-breaker OPEN logs. Add a small replay runbook for DLQ messages. *(Today these are log/DB-visible only.)*
+2. **Permanent vs transient email errors.** Classify SES/SMTP permanent rejections (for example 5xx SMTP, `MessageRejected`) as non-retryable so they go straight to the DLQ instead of using every SQS receive.
+3. **An authenticated `RESOLVED` workflow.** Add an internal sales API behind authentication (Cognito/OIDC) that calls the existing `EnquiryService.resolveEnquiry`, with an audit trail (`resolved_by`, `resolution_notes` already exist).
+4. **Continuous delivery.** A GitHub OIDC → AWS role, build and push images to ECR, deploy ECS Fargate services (migrations as a one-off task), sync the SPA to S3, invalidate CloudFront. Infrastructure as code (Terraform or CDK) for the resources in `docs/deployment.md`.
+5. **Service-to-service authentication upgrade.** Replace the shared bearer token (ADR-018) with IAM/SigV4 on a private API, or with mTLS through ECS Service Connect, and rotate secrets through Secrets Manager.
+6. **Product read cache.** A short-TTL in-process cache, or a cache at the Catalog boundary, for the provider's list and category reads, with stale-on-error to ride out provider outages (ASM-027).
+
+### 9.2 Growing beyond the proof of concept
+
+- **More providers or entity types:** add a `ProductProvider` implementation or an `EnquiryEntityType` and template. The contracts are versioned (`CATALOG_ENQUIRY_SUBMITTED` v1), so v2 events can run alongside v1 consumers.
+- **More notification channels** (SMS, CRM): add consumers on an SNS → SQS fan-out from the same outbox event, without changing Catalog.
+- **Scale:** both services are stateless apart from PostgreSQL. The outbox publisher and callback worker already use `SKIP LOCKED` leases, so they can run as several ECS tasks; SQS concurrency is configurable.
+- **Duplicate-email window (ASM-034):** use the SES idempotency/configuration-set event stream, or a provider-side message deduplication key, to close the remaining crash window.
+- **Pagination and search:** add server-side pagination and an indexed search store once the catalogue outgrows a single provider list call.
+
+### 9.3 Requirements simplified or dropped for the time-box
+
+- Delivery and bounce tracking beyond provider acceptance (ASM-011).
+- Sales dashboard and authentication (ASM-024, ASM-029).
+- Pagination and caching (ASM-026, ASM-027).
+- Live AWS deployment: the architecture is AWS-compatible and runs locally on SQS-compatible ElasticMQ and SMTP (ADR-016).
+

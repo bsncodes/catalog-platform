@@ -1,9 +1,9 @@
 # AI Usage Notes
 
 **Version:** 1.0  
-**Status:** Working record — planning and documentation stage  
+**Status:** Final record for the 2026-11-22 implementation session  
 **Project:** AI-Native Engineer Code Challenge for Catalog Platform
-**Last updated:** 2026-11-21
+**Last updated:** 2026-11-22
 
 > **Accuracy rule:** This file distinguishes AI tools that have already been used from tools selected for the implementation workflow. Update it as implementation, testing and review happen. Do not present planned work, generated code, prompts, reviews or test results as completed evidence.
 
@@ -18,16 +18,17 @@ The human owner remains responsible for the submitted source code, design decisi
 | Tool / model | Status | Intended or completed use | Evidence / notes |
 |---|---|---|---|
 | ChatGPT — GPT-6 | Used for planning and documentation in this preparation workflow | Requirements analysis, architecture clarification, and drafting the project records | Assisted with `ASSUMPTIONS.md`, `DECISIONS.md` and `PLAN.md`. The user reviewed the direction and corrected scope and document-editing expectations during the conversation. |
-| Claude Code — Claude Opus 5.5, Medium effort | Selected in project instructions; actual implementation usage must be confirmed | Primary implementation engineer for repository inspection, coding, tests and documentation updates | This exact model/effort is declared in `CLAUDE.md`. Add actual session dates and tasks after running it. |
-| Claude Code `pr-reviewer` subagent | Required by the project workflow; completion not yet evidenced here | Independent review of the actual pull-request diff, acceptance criteria, architecture and failure paths | The prescribed instruction-file location is `.claude/agents/pr-reviewer.md`. Record whether that file is committed, the model used, PR URL, reviewed commit SHA and actual verdict after the review occurs. |
-| Additional specialist or external model reviewers | Not recorded as used | Optional architecture or reliability review at major milestones | `CLAUDE.md` permits additional specialist agents and an external model such as GPT-6, but explicitly says not to claim cross-model review unless it actually happened. |
+| Claude Code (VS Code extension) — Claude Opus 5.5 (`claude-opus-5-5`) | Used, 2026-11-22 from 13:32 IST | Primary implementation engineer: repository inspection, all application code, tests, Docker/CI configuration, PR creation and documentation updates | One continuous session supervised by the project owner; see §7 and `TIME_SPENT.md`. |
+| Claude Code `pr-reviewer` subagent — `model: inherit` (Claude Opus 5.5) | Used on every PR | Independent, read-only review of each PR's real diff, published as GitHub COMMENT reviews | `.claude/agents/pr-reviewer.md` is committed. Same model family as the implementer, so this is an independent agent review, **not** a cross-model review. Evidence in §6. |
+| Additional specialist or external model reviewers | Not used | — | No external cross-model review was performed during implementation. |
+| GitHub CodeQL + Dependabot | Used (automated) | Static analysis on every PR; dependency update PRs | CodeQL flagged one issue (missing rate limit on `/health/ready`), fixed in PR #2. Dependabot opened #3–#6, #8, #10 and #11; the owner decided on each (merged #4–#6 and #11). |
 
-### Usage status at the time this file was created
+### Usage status at submission
 
-- Planning/documentation assistance: used.
-- Claude implementation sessions: selected in the instructions; execution details still need to be logged.
-- Independent PR review: required by the instructions; no completed review evidence is recorded in this file yet.
-- Test execution and code corrections: record actual outcomes during implementation; do not infer them from `PLAN.md`.
+- Planning/documentation assistance (GPT-6): used before implementation (2026-11-21).
+- Implementation (Claude Code, Opus 5.5): used for the whole build on 2026-11-22.
+- Independent PR review (`pr-reviewer` subagent): ran on every PR, with fix-and-re-review cycles (§6).
+- Test results quoted in the PRs and README were produced by commands actually run in this session or by GitHub Actions.
 
 ## 3. Agent Instructions and Project Context
 
@@ -40,7 +41,8 @@ The following project files provide instructions or context to AI tools and shou
 | `ASSUMPTIONS.md` | Records interpretations of ambiguity and their status | Present; update when implementation evidence confirms or invalidates an assumption. |
 | `DECISIONS.md` | Records architectural decisions, alternatives, rationale and consequences | Present; change only through deliberate decision/change control. |
 | `PLAN.md` | Implementation phases, time targets, dependencies and exit gates | Present; update actual phase status and deviations during execution. |
-| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Required path in `CLAUDE.md` and `PLAN.md`. Confirm that the file exists in the implementation repository and is committed before claiming the reviewer is configured. |
+| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 13 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
+| `.github/workflows/ci.yml`, `codeql.yml`, `.github/dependabot.yml` | Automated verification on every PR | Added in PR #2 at the owner's request; E2E job added in PR 5. |
 
 `README.md`, `TIME_SPENT.md`, `PR_DESCRIPTION.md` and the detailed `docs/` contracts are execution/submission records. Update them from the real implementation and measured results rather than treating the planning documents as evidence that the work has been completed.
 
@@ -78,6 +80,27 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 
 **Effect on the solution:** `SPEC.md` and `DECISIONS.md` separate the enquiry lifecycle from notification delivery/callback state and require durable callback recovery and idempotency.
 
+### 4.6 Actual directions during the implementation session (2026-11-22, verbatim where quoted)
+
+| Time (IST) | Owner direction | AI response / effect |
+|---|---|---|
+| 13:32 | Session brief: *"Total time budget: 180 minutes from the actual session start … Follow `PLAN.md` … Do not force-push, merge, deploy, delete branches or publish changes to remote services without my explicit approval."* | Start time recorded from the system clock (13:32:41). Work ran autonomously; remote actions waited for approval. |
+| ~13:44 | *"but are we doing in 1 PR or several PR's are raised?"* | Answered: one PR, per `CLAUDE.md` §21. |
+| ~13:44 | *"no, lets break it and do it in multiple PR's after your setup is done"* | Asked two clarifying questions. The owner chose **"Sequential into main"** and **"Every PR"** reviewed. Recorded as ADR-017, which supersedes the single-PR rule. Work split into 5 PRs. |
+| ~13:48 | *"yes approved all your git commands go ahead"* | Given after Claude Code's auto-mode safety check blocked the first `git push`. Branches pushed and PRs opened. Merging was left to the owner, and force-pushes were avoided (a rebased branch was reset to its pushed tip instead). |
+| ~14:00 | *"can you setup and add all the relevant github CI/CD pipeline workflow actions in the PR2 only"* | Added CI (quality, integration with service containers, compose smoke), CodeQL and Dependabot to PR #2. CD to AWS was **not** automated: there is no AWS account or OIDC role, and the owner had asked for no deploys. Documented in the README. |
+| 14:33 | *"note all this TIME_SPEND and AI_USAGE"* | This section, the review/runtime records below and the `TIME_SPENT.md` checkpoint. |
+| 14:43 | *"we should only consider only the active time in the session, irrespective of how many agents are working, means the time we started and paused, and then resumed, until we finished, and the total time shouldn't exceed 180 mins."* | `TIME_SPENT.md` now counts session wall-clock time only: parallel agents add nothing, waiting inside the session counts, and there is a hard stop at 16:32:41 IST. |
+
+### 4.7 Tooling and permission events
+
+- **Auto-mode safety checks (Claude Code):** (1) a multi-heredoc shell command was blocked because the checker could not rule out a dangerous removal. Nothing was deleted; the files were rewritten with the Write tool. (2) `git commit && git push` was blocked as an outward action until the owner approved. The local commit was then made separately.
+- **Owner-only actions:** all assessment PRs were merged by the owner, not the AI.
+- **Merge/fix race (PR #9):** the owner merged #9 at its reviewed head `3ebab07` (14:48 IST) while the implementer was preparing fixes for the reviewer's P3 findings. The fix commit `14deff9` was then pushed to the already-merged branch. The re-review caught that these fixes never reached `main` and had no CI run. Correction: the fixes ship in PR 5, which contains `14deff9`, and they get CI there. Lesson: tell the owner when a fix round is in progress, and check the PR state before pushing.
+- **Dependabot:** after CI landed, Dependabot opened #3, #8 and #10 (Node 22 → 26 base images, still open), #4–#6 (GitHub Actions bumps) and #11 (nginx 1.27 → 1.31). The owner merged #4–#6 and #11. The AI did not merge or modify any of them; it aligned `ci.yml` to the merged action versions and merged `main` into PR #12 to pick up #11.
+
+
+
 ## 5. AI Errors, Human Review and Corrections
 
 ### 5.1 Confirmed documentation-process correction
@@ -86,20 +109,25 @@ During documentation preparation, the user clarified that edits must remain scop
 
 **Correction applied to the workflow:** Subsequent document deliverables were generated as separate files, and the existing project documents were treated as source material rather than rewritten as part of each new document. This is a documentation/workflow correction; it is not a claim that an implementation-code defect has already been found and fixed.
 
-### 5.2 Implementation-code errors
+### 5.2 Implementation-code errors (actual, 2026-11-22, Claude Code / Opus 5.5)
 
-No specific AI-generated implementation-code defect or implementation correction is evidenced in the project records at the time this file was created. Complete this section during the coding session with real examples. Do not invent an error merely to fill the section.
+| # | AI-generated output | How it was detected | Why it was wrong | Correction | Verification |
+|---|---|---|---|---|---|
+| 1 | SQS timeout fix for RV2-02 used only `requestTimeout` | `pr-reviewer` re-review reproduced a hung send against a TCP server that never replies (RV2-06) | In `@smithy/node-http-handler` 4.x, `requestTimeout` only logs a warning unless `throwOnRequestTimeout: true`. The outbox loop could still stall forever. | `createSqsClient` factory with `throwOnRequestTimeout` + `socketTimeout` (`03a53dd`). The same lesson was applied to Notification's SQS and SES clients. | New test asserts `TimeoutError`, and it **fails without the fix** (mutation-checked by the implementer and by the reviewer) |
+| 2 | Event v1 schema used `min(1)` without trim/max | Reviewer RV1-01 ran the built schema with whitespace and a 50k-character message | Looser than the documented event contract | Trim + bounds, reusing the shared limits (`9ccbd8b`) | Contract tests for whitespace and oversize cases |
+| 3 | Postgres health check `pg_isready` over the Unix socket | Reviewer RV1-02 (upstream image behaviour) | Could report healthy before the init script created the service roles/databases | TCP check (`9ccbd8b`) | Clean `down -v` boot verified |
+| 4 | Catalog `pg.Pool` without an `'error'` listener | Reviewer RV2-01 reproduced a process exit via `pg_terminate_backend` | An idle-connection drop would crash Catalog and stop the outbox | Listener + `restart: unless-stopped` (`be5ee15`) | Integration test terminates a backend and queries again |
+| 5 | SES client built with SDK defaults | Reviewer RV3-01 | A hung send could outlive the email lease and SQS visibility timeout, causing a duplicate email | `createSesClient` with enforced timeouts, a processor send-timeout guard, and config budget validation (`872100b`) | Hanging-provider integration test → `EMAIL_FAILED`; config tests |
+| 6 | Vitest `--exclude` glob for unit tests | Local test failures (integration files ran in parallel against one DB) | The CLI glob did not match, so `pnpm test` also ran integration tests | Separate `vitest.config.ts` / `vitest.integration.config.ts` | Unit 39 + integration 17 green |
+| 7 | `EnquiryRequest = z.output<…>` made `message` a required key | `pnpm typecheck` | Zod transform output typed `message: string \| undefined` as required | Explicit optional type in contracts | Typecheck 0 |
+| 8 | Nginx: regex `location ~ ^/(api\|internal\|health)` alongside a plain `/api/catalog/` prefix | Manual curl through the gateway returned 404 for the API | Regex locations win over non-`^~` prefixes | `location ^~ /api/catalog/` | Gateway curls + CI smoke + E2E |
+| 9 | Frontend toolchain: `@vitejs/plugin-react` 6 with Vite 7; `jsdom` 31 | Vitest startup errors | plugin-react 6 needs Vite 8; jsdom 31's undici 8 fails on the local Node 23.0 | plugin-react 5; pnpm override `jsdom: ^26.1.0` | 14 frontend tests green |
+| 10 | E2E read the `<h1>` immediately after clicking a product | E2E assertion: expected the homepage hero title | Race with client-side navigation | Wait for the product URL/details first | 5/5 E2E green |
+| 11 | 400 vs 422 mapping for enquiry validation | Reviewer RV2-03 | All schema failures returned 422; the contract says structural problems get 400 | Structural/field split (`be5ee15`) | API tests for both cases |
+| 12 | Enquiry form said "not sent" on any failure, including a gateway timeout where the enquiry may have been stored | Reviewer RV4-01 | Misleading result, which could prompt a duplicate enquiry; nginx also returned HTML for gateway errors | JSON gateway errors; "could not confirm" wording for 504/network (`14deff9`) | RTL test; live: Catalog stopped → JSON 504 with correlation id |
+| 13 | `AI_USAGE.md` recorded PR #9's focused re-review as "CHANGES REQUIRED … P1" | Final reviewer RV5-02 compared it with the published review body | The published review said *no P0/P1/P2 code findings*, plus a delivery gap; the record overstated severity | Restated as published; every §6 row was re-checked against `gh api …/reviews` | RV5 regression check |
 
-Use this format for each actual incident:
-
-| Field | Record |
-|---|---|
-| Date / session | `YYYY-MM-DD`, tool and model |
-| AI-generated output | File, function, design or recommendation that was incorrect |
-| How it was detected | Failing test, type check, code inspection, reviewer finding, runtime reproduction or requirement mismatch |
-| Why it was wrong | Technical explanation and impact |
-| Correction | What was changed and by whom |
-| Verification | Exact test/check/review evidence after the correction |
+Process issue: in one run the reviewer subagent checked out a commit inside the implementer's worktree, leaving it on a detached HEAD. No work was lost. Later review prompts required the reviewer to use its own worktree.
 
 ### 5.3 Review discipline
 
@@ -112,23 +140,47 @@ For every material AI-generated change:
 5. For critical workflow changes, inspect both the success path and the relevant failure/retry path.
 6. Evaluate reviewer findings technically. Accept or reject each with a reason; do not blindly apply suggestions.
 
-## 6. Planned Independent Review Evidence
+## 6. Independent Review Evidence
 
-Complete this section only after the reviewer has inspected the actual pull request.
+Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, committed; `model: inherit` → Claude Opus 5.5). All reviews are GitHub **COMMENT** reviews; the author and reviewer share a GitHub identity, so no formal approval is claimed. No external cross-model review was performed.
 
-| Item | Actual value |
-|---|---|
-| Reviewer agent name | Pending |
-| Reviewer model / provider | Pending — record the actual model, not the configured intention |
-| Agent instruction file committed | Pending — verify `.claude/agents/pr-reviewer.md` |
-| Pull request URL / number | Pending |
-| Reviewed commit SHA | Pending |
-| Review date | Pending |
-| Verdict | Pending — `CHANGES REQUIRED` or `REVIEW PASSED` |
-| Findings and severity | Pending — link to actual PR comments or review record |
-| Corrections made | Pending — link to commits and regression tests |
-| Re-review commit SHA / outcome | Pending, if a re-review occurs |
-| External cross-model review | Pending / not performed unless actual evidence is added |
+| PR | Reviewed SHA | Verdict | Findings | Corrections |
+|---|---|---|---|---|
+| #1 setup | `d6d0378` | CHANGES REQUIRED (review 6011199598) | RV1-01 P2, RV1-02 P2, RV1-03..05 P3 | `9ccbd8b` |
+| #1 | `9ccbd8b` | REVIEW PASSED (6011207779) | — | Merged by owner |
+| #2 catalog | `3937ed7` | REVIEW PASSED with P2/P3 to resolve (6011233839) | RV2-01 P2, RV2-02 P2, RV2-03/04 P3 | — |
+| #2 | `e7dcbdc` (CI added) | REVIEW PASSED (6011245842) | RV2-05 P3 (CodeQL) | — |
+| #2 | `be5ee15` | CHANGES REQUIRED (6011271968) | RV2-06 P2: RV2-02 fix ineffective (reproduced) | `03a53dd` |
+| #2 | `03a53dd` | REVIEW PASSED (6011294790) | — | Merged by owner |
+| #7 notification | `39b2f71` | CHANGES REQUIRED (6011373403) | RV3-01 P2, RV3-02/03 P3 | `872100b` |
+| #7 | `872100b` | REVIEW PASSED (6011398653) | Non-blocking: guard timeout released the email lease | `7d78b0d` (accepted voluntarily) |
+| #7 | `7d78b0d` | REVIEW PASSED (6011412047) | — | — |
+| #9 frontend/gateway | `3ebab07` | REVIEW PASSED with optional P3s (6011463722) | RV4-01 gateway HTML errors / misleading "not sent" on timeout; RV4-02 rating not announced to screen readers; RV4-03 silent 422; RV4-04 stale README table | Owner merged #9 at `3ebab07` (14:48 IST) before the fix commit was pushed |
+| #9 | `14deff9` (pushed after merge) | Focused re-review (6011475023): fixes correct, **no P0/P1/P2 code findings**, but a delivery gap (not in `main`, no CI run) plus a new optional RV4-05 P3 | RV4-05: unvalidated correlation ID echoed into the gateway's JSON | Fixes carried into PR #12 with RV4-05; README table (RV4-04) corrected in #12 |
+| #12 submission | `22953d2` | CHANGES REQUIRED (6011496306), documentation only: no P0/P1, no code defects | RV5-01..04 P2 (time log not reconciled, a misstated review record, stale README text, missing next-steps section); RV5-05/06 P3; remaining risk: gateway 502 reported as "not sent" | Fixed in the following commit on #12; see that PR for the re-review |
+| #12 | `6fc219b` | **REVIEW PASSED** (6011518525): RV5-01..06 and the 502 risk resolved; no P0/P1/P2 | Non-blocking: PR #1 open-time precision; JSON error responses lack nosniff/CSP (cosmetic) | Closing docs commit (time row and these outcome rows only, disclosed in advance) |
+
+Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
+
+**Reviewer runtime (diagnostic only; it runs inside the session's wall clock, so per the owner's rule it adds nothing to `TIME_SPENT.md`):**
+
+| Review run | Reviewed SHA | Wall time | Tool calls |
+|---|---|---:|---:|
+| PR #1 initial | `d6d0378` | 127 s | 10 |
+| PR #1 re-review | `9ccbd8b` | 59 s | 5 |
+| PR #2 initial | `3937ed7` | 225 s | 19 |
+| PR #2 CI commit | `e7dcbdc` | 348 s (cumulative with the initial run) | 26 |
+| PR #2 re-review | `be5ee15` | 207 s | 10 |
+| PR #2 re-review | `03a53dd` | 122 s | 4 |
+| PR #7 initial | `39b2f71` | 268 s | 14 |
+| PR #7 re-review | `872100b` | 162 s | 5 |
+| PR #7 re-review | `7d78b0d` | 163 s | 3 |
+| PR #9 initial | `3ebab07` | 219 s | 16 |
+| PR #9 focused re-review | `14deff9` | 108 s | 7 |
+| PR #12 final submission review | `22953d2` | 311 s | 29 |
+| PR #12 focused re-review | `6fc219b` | not reported separately | — |
+
+Every reviewer finding was validated by the implementer against the code before it was fixed. None was rejected, and one non-blocking observation was voluntarily implemented (`7d78b0d`). Re-reviews were run against the exact new head SHA each time.
 
 A reviewer subagent running in the same model family is an independent agent review, but it is not automatically an external cross-model review. Describe the review accurately.
 
@@ -139,20 +191,23 @@ Add a row for each meaningful implementation or review session. Keep the entries
 | Date | Tool / exact model | Task | Files or areas changed | Human verification performed | Outcome / follow-up |
 |---|---|---|---|---|---|
 | 2026-11-21 | GPT-6 | Planning and project-document preparation | `ASSUMPTIONS.md`, `DECISIONS.md`, `PLAN.md` | User reviewed the direction and provided corrections; no application-code verification is implied | Planning records prepared; implementation usage remains to be logged |
-| Pending | Claude Code — exact model/configuration | Implementation | Pending | Pending | Pending |
-| Pending | Claude Code `pr-reviewer` subagent — exact model | Independent PR review | Pending | Actual PR diff and findings must be checked | Pending |
+| 2026-11-22 | Claude Code — Claude Opus 5.5 | Workspace, contracts, infra (PR #1) | root config, `packages/contracts`, `docker-compose.yml`, `infra/` | Owner approved the PR strategy and the push; owner merged | Merged |
+| 2026-11-22 | Claude Code — Claude Opus 5.5 | Catalog Service + CI (PR #2) | `services/catalog`, `.github/` | 45 unit + 18 integration tests, compose smoke, GitHub Actions; owner requested CI in this PR | Merged after 3 review rounds |
+| 2026-11-22 | Claude Code — Claude Opus 5.5 | Notification Service (PR #7) | `services/notification` | 24 unit + 16 integration tests, full local SQS→Mailpit→PROCESSED run | REVIEW PASSED at `7d78b0d` |
+| 2026-11-22 | Claude Code — Claude Opus 5.5 | Frontend + gateway, Playwright E2E | `apps/web`, `infra/nginx`, `e2e/` | 14 RTL tests; 5 Playwright tests against the running stack | PRs 4–5 |
+| 2026-11-22 | Claude Code `pr-reviewer` subagent — Opus 5.5 | Independent review of every PR | none (read-only) | Implementer validated every finding before fixing; all were accepted | See §6 |
 
 ## 8. Before Submission
 
-- [ ] Replace intended-tool descriptions with exact tools/models actually used.
-- [ ] Confirm the agent instruction files included in the committed repository.
-- [ ] Preserve 3–5 meaningful prompts or moments; use exact excerpts where available and label paraphrases clearly.
-- [ ] Add actual examples of AI mistakes and how they were caught, or explicitly state that no material implementation error was observed.
-- [ ] Record actual reviewer agent/model, PR URL, reviewed SHA, verdict and corrections only after they occur.
-- [ ] Record any external cross-model review only if it actually happened.
-- [ ] Ensure no secrets, private credentials or sensitive prompt content are included.
-- [ ] Keep this document consistent with `TIME_SPENT.md`, `PLAN.md`, the final PR and the repository history.
+- [x] Exact tools/models actually used are recorded (§2).
+- [x] Agent instruction files are committed (`CLAUDE.md`, `.claude/agents/pr-reviewer.md`).
+- [x] Key prompts and moments are preserved with verbatim excerpts (§4.6).
+- [x] Actual AI mistakes and how they were caught are recorded (§5.2).
+- [x] Reviewer agent/model, PR URLs, reviewed SHAs, verdicts and corrections are recorded (§6).
+- [x] No external cross-model review is claimed (none was performed).
+- [x] No secrets or credentials are included.
+- [x] Consistent with `TIME_SPENT.md`, the PRs and the git history.
 
 ---
 
-**Ownership statement:** AI tools assisted with planning and are intended to assist with implementation and review. The submitting engineer remains responsible for understanding, reviewing, testing and defending the complete solution.
+**Ownership statement:** AI tools assisted with planning, implementation and review. The submitting engineer remains responsible for understanding, reviewing, testing and defending the complete solution.

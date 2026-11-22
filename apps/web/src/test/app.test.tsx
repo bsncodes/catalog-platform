@@ -97,7 +97,7 @@ describe('Product details page', () => {
     expect(screen.getByText('$55.99')).toBeInTheDocument();
     expect(screen.getByText('Description 3')).toBeInTheDocument();
     expect(within(screen.getByRole('main')).getByRole('link', { name: 'electronics' })).toHaveAttribute('href', '/categories/electronics');
-    expect(screen.getByLabelText('Rated 4.7 out of 5 from 500 reviews')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Rated 4.7 out of 5 from 500 reviews' })).toBeInTheDocument();
   });
 
   it('shows an error for a missing product', async () => {
