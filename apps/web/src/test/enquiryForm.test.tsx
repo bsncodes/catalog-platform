@@ -21,9 +21,8 @@ describe('EnquiryForm', () => {
     mockApi({});
     render(<EnquiryForm entityType="PRODUCT" entityId="3" entityName="Cotton Jacket" />);
     expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
-    const enquire = screen.getByRole('button', { name: 'Enquire' });
-    expect(enquire).toHaveAttribute('aria-expanded', 'false');
-    await userEvent.click(enquire);
+    await userEvent.click(screen.getByRole('button', { name: 'Enquire' }));
+    expect(screen.queryByRole('button', { name: 'Enquire' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Enquire about this product' })).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toHaveFocus();
   });

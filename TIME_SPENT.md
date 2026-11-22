@@ -1,7 +1,7 @@
 # Catalog Platform — Time Spent
 
 **Version:** 1.0  
-**Status:** S-006 in progress (from 21:50:55). Implementation total so far: S-001 95 + S-002 6 + S-003 3 + S-004 5 + S-005 3 + S-006 3 = **115 min**. Pauses are not counted. Pre-implementation preparation (about 180 min, owner's estimate) is reported separately in §5.
+**Status:** S-006 in progress (from 21:50:55). Implementation total so far: S-001 95 + S-002 6 + S-003 3 + S-004 5 + S-005 3 + S-006 9 = **121 min**. Pauses are not counted. Pre-implementation preparation (about 180 min, owner's estimate) is reported separately in §5.
 
 **Rounding rule:** S-001 is the sum of its sub-rows, measured in whole minutes (exact 95 min 36 s). S-002 onwards are each rounded **up** to the next whole minute (conservative). The reported total is therefore at least the exact wall-clock sum.
 
@@ -50,7 +50,7 @@ The targets below are copied from the approved phase allocation in `PLAN.md`. Ph
 | 5 | Testing and integration | 20 | Interleaved | — | See session log §4 |
 | 6 | PR and independent review | 15 | Interleaved | — | See session log §4 |
 | 7 | Final corrections and documentation | 10 | Interleaved | — | See session log §4 |
-| | **Total (S-001…S-006, pauses excluded)** | **180** | **115** | **-65** | **Within the 180-minute implementation cap** |
+| | **Total (S-001…S-006, pauses excluded)** | **180** | **121** | **-59** | **Within the 180-minute implementation cap** |
 
 **Variance formula:** `Actual minutes − Target minutes`. A positive value is an overrun; a negative value is time saved. Do not report a total actual duration while any material execution time is untracked without clearly qualifying the total.
 
@@ -71,7 +71,7 @@ Add one row for each focused work session. Use additional rows when a phase span
 | S-003 | 2026-11-22 | 6, 7 | 21:01:11 | 21:03:49 | 0 | 3 | Resumed at the owner's instruction ("resume the session now") to fix the open status-API review findings on PR #13. RV6-03: `Cache-Control: no-store` on every status response (verified live on 404/400), read-specific 503 message, 503 tests (catalog unit 50). RV6-02: PR-status facts corrected (#12 merged at `b4e86af`, #13 is the open submission PR), ASM-035 CI evidence, AI mistake #14 (repeated merge/push race). Gates and E2E 5/5 re-run. Owner is reviewing #13 manually, so no reviewer subagent was run. Session closed | PR #13 commits after `2338924` |
 | S-004 | 2026-11-22 | 6, 7 | 21:31:43 | 21:35:57 | 0 | 5 | Owner asked for a `pr-reviewer` run on PR #13. Review 6013178058 on `99ed537`: CHANGES REQUIRED, docs only (no code defects); RV6-01..03 confirmed resolved; CI 6/6; all suites + E2E 5/5. Fixed RV7-01 (PR #13 title/description on GitHub updated) and RV7-02 (wall-clock row), plus the optional 429 no-store assertion. Session closed | PR #13 review 6013178058; commit after `99ed537` |
 | S-005 | 2026-11-22 | 6, 7 | 21:40:05 | 21:42:24 | 0 | 3 | Focused re-review of PR #13 at `80f35ed`, started automatically after the owner's correction ("you have to do it automatically"). Review 6013202469: **REVIEW PASSED**, no findings, CI 6/6. Recorded it, stated the rounding rule, updated the PR #13 body. Session closed | PR #13 review 6013202469 |
-| S-006 | 2026-11-22 | 3, 5, 6, 7 | 21:50:55 | (in progress at 21:53:16) | 0 | 3 | Final submission PR: **Enquire** button (acceptance criterion, wording taken literally), owner's pre-implementation estimate recorded (§5), approximate time split (§5.2), new feature-branch PR into `main` left open, reviewer run | PR from `feat/final-submission` |
+| S-006 | 2026-11-22 | 3, 5, 6, 7 | 21:50:55 | (in progress at 21:59:00) | 0 | 9 | Final submission PR: **Enquire** button (acceptance criterion, wording taken literally), owner's pre-implementation estimate recorded (§5), approximate time split (§5.2), new feature-branch PR into `main` left open, reviewer run | PR from `feat/final-submission` |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 
@@ -87,7 +87,7 @@ Add rows as required; do not leave placeholder rows in the final submitted recor
 
 ### 4.2 AI tool runtime (diagnostic, overlapping)
 
-Reviewer subagent runs: 13 runs in total (see `AI_USAGE.md` §6) (see `AI_USAGE.md` §6). They ran **in parallel** within the session's wall clock, so they add nothing to the total.
+Reviewer subagent runs: 17 runs in total (see `AI_USAGE.md` §6). They ran **in parallel** within the session's wall clock, so they add nothing to the total.
 
 ## 5. Pre-Implementation Preparation (outside the 180-minute implementation window)
 
@@ -114,8 +114,8 @@ Reviewer subagent runs: 13 runs in total (see `AI_USAGE.md` §6) (see `AI_USAGE.
 | Part | Time | How it was measured |
 |---|---:|---|
 | Pre-implementation preparation (ChatGPT / GPT-6) | ~180 min | Owner's retrospective estimate (§5) |
-| Implementation, testing, review and submission (Claude Code) | **115 min** | System clock, sessions S-001…S-006 (§4) |
-| **Total** | **~295 min** | |
+| Implementation, testing, review and submission (Claude Code) | **121 min** | System clock, sessions S-001…S-006 (§4) |
+| **Total** | **~301 min** | |
 
 ### 5.2 Rough split of implementation time: planning, building, testing, reviewing
 
@@ -126,8 +126,8 @@ The assessment asks for a rough split. The activities overlapped: services were 
 | Planning | ~5 | Repository inspection, plan adaptation, the PR-strategy decision (ADR-017) |
 | Building | ~52 | Contracts, both services, frontend, gateway, CI, status API, Enquire button |
 | Testing | ~24 | Unit, integration and E2E tests; local stack runs; live verification |
-| Reviewing | ~34 | Reviewer runs and their fixes, documentation and evidence, PR descriptions |
-| **Total** | **115** | Matches the measured implementation total |
+| Reviewing | ~40 | Reviewer runs and their fixes, documentation and evidence, PR descriptions |
+| **Total** | **121** | Matches the measured implementation total |
 
 The ~180 minutes of preparation (§5) was mostly planning and documentation.
 
@@ -152,10 +152,10 @@ Complete this section using actual timestamps and links.
 
 | Metric | Actual result |
 |---|---|
-| Total active project time | **115 minutes** implementation (S-001…S-006); plus about 180 min pre-implementation preparation reported separately (§5) |
-| Total wall-clock span | 13:32:41–session close across S-001…S-004; only the in-session time is counted. Pauses between sessions (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05) are excluded (owner's rule, §4) |
-| Total breaks / unrelated interruptions | Four pauses (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05), excluded from the total |
-| Difference from 180-minute target | -65 minutes (implementation; under target) |
+| Total active project time | **121 minutes** implementation (S-001…S-006); plus about 180 min pre-implementation preparation reported separately (§5) |
+| Total wall-clock span | 13:32:41 to the session close, across S-001…S-006; only in-session time is counted. Pauses between sessions (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05, 21:42:24–21:50:55) are excluded (owner's rule, §4) |
+| Total breaks / unrelated interruptions | Five pauses (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05, 21:42:24–21:50:55), excluded from the total |
+| Difference from 180-minute target | -59 minutes (implementation; under target) |
 | Phases completed within target | Phases ran interleaved; approximate split in §5.2; everything finished inside the 180-minute cap |
 | Main causes of savings | Parallel work: the next service was built while each PR was under review. Shared contracts removed rework. Each reviewer finding was fixed while it was still small. |
 | Work deferred or left incomplete | No functional requirement incomplete. Deferred by design: CD to AWS, CloudWatch alarms, authenticated `RESOLVED` workflow, product cache, permanent-vs-transient email error classification (`DECISIONS.md` §9, README limitations) |

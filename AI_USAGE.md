@@ -41,7 +41,7 @@ The following project files provide instructions or context to AI tools and shou
 | `ASSUMPTIONS.md` | Records interpretations of ambiguity and their status | Present; update when implementation evidence confirms or invalidates an assumption. |
 | `DECISIONS.md` | Records architectural decisions, alternatives, rationale and consequences | Present; change only through deliberate decision/change control. |
 | `PLAN.md` | Implementation phases, time targets, dependencies and exit gates | Present; update actual phase status and deviations during execution. |
-| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 16 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
+| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 17 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
 | `.github/workflows/ci.yml`, `codeql.yml`, `.github/dependabot.yml` | Automated verification on every PR | Added in PR #2 at the owner's request; E2E job added in PR 5. |
 
 `README.md`, `TIME_SPENT.md`, `PR_DESCRIPTION.md` and the detailed `docs/` contracts are execution/submission records. Update them from the real implementation and measured results rather than treating the planning documents as evidence that the work has been completed.
@@ -140,6 +140,7 @@ During documentation preparation, the user clarified that edits must remain scop
 | 13 | `AI_USAGE.md` recorded PR #9's focused re-review as "CHANGES REQUIRED … P1" | Final reviewer RV5-02 compared it with the published review body | The published review said *no P0/P1/P2 code findings*, plus a delivery gap; the record overstated severity | Restated as published; every §6 row was re-checked against `gh api …/reviews` | RV5 regression check |
 | 14 | Pushed the status-API commit to `test/e2e-docs` after PR #12 had been merged | Reviewer RV6-01 checked `git merge-base` and the check runs | The feature never reached `main` and CI never ran: the same race as #9, repeated | New PR #13 from `feat/enquiry-status-api`; check `gh pr view <n> --json state` before every push | CI 6/6 on #13 |
 | 15 | Built from the derived `SPEC.md`/`CLAUDE.md` and never re-read the original brief PDF until the end | Owner asked whether everything was complete; the implementer then checked the PDF line by line | The Enquiry criterion says *click the Enquire button, then complete the subsequent form*, but the form was always shown. The brief asks for a planning/building/testing/reviewing time split, which was only given as "interleaved". | Added the Enquire button (collapsed → form, focus management, `aria-expanded`), RTL + E2E updated; added the time split (§5.2) | Web 18; E2E 5/5 |
+| 16 | Review-totals line in `PR_DESCRIPTION.md` said "P1: 0, P2: 6, P3: 13" | Reviewer RV9-01 recounted from §6 | It counted only some reviews; the real totals were P1 1, P2 12, P3 17 (before RV9) | Recounted finding by finding and listed IDs per severity | RV9 re-review |
 
 Process issue: in one run the reviewer subagent checked out a commit inside the implementer's worktree, leaving it on a detached HEAD. No work was lost. Later review prompts required the reviewer to use its own worktree.
 
@@ -176,6 +177,7 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #12 (post-merge) | `6d89558` (status API, pushed after #12 merged) | CHANGES REQUIRED (6011622896): **no code defects** in the API; RV6-01 P1 delivery gap (#12 already merged), RV6-02 P2 stale PR-status docs, RV6-03 P3 (no-store only on 200, write-wording 503, no 503 test) | Privacy, enumeration, service boundary and OpenAPI consistency verified (`$ref`s resolve via js-yaml) | RV6-01: PR #13; RV6-02/03 fixed on #13 in session S-003 |
 | #13 submission | `99ed537` | CHANGES REQUIRED (6013178058), **docs only, no code defects**; RV6-01..03 verified resolved; CI 6/6 | RV7-01 P2: PR #13 title/description on GitHub stale; RV7-02 P3: TIME_SPENT wall-clock row said "no pauses" | Fixed in S-004 (GitHub PR edited; TIME_SPENT row) |
 | #13 | `80f35ed` | **REVIEW PASSED** (6013202469): RV7-01/02 resolved, no findings, CI 6/6 | Non-blocking: inconsistent minute rounding (rule now stated); stale "no further re-review" row (fixed) | — |
+| #14 submission | `8cf0cc0` | CHANGES REQUIRED (6013264748): no P0/P1, no code defects; full check against the original brief: all constraints, criteria and deliverables met | RV9-01 P2: PR description undercounted review findings (said P1 0 / P2 6 / P3 13); RV9-02 P3: stale run counts and pause list; RV9-03 P3: Enquire button ARIA attributes ineffective | Fixed in S-006; re-review on the new head |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 

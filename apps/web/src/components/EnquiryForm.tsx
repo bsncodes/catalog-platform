@@ -108,7 +108,7 @@ export function EnquiryForm({ entityType, entityId, entityName }: Props) {
     return (
       <section className="enquiry enquiry--collapsed" aria-label={heading}>
         <p>Interested? Ask our sales team about {entityType === 'PRODUCT' ? 'this product' : 'this category'}.</p>
-        <button type="button" className="button" aria-expanded="false" aria-controls="enquiry-form" onClick={() => setOpen(true)}>
+        <button type="button" className="button" onClick={() => setOpen(true)}>
           Enquire
         </button>
       </section>
