@@ -76,7 +76,42 @@ importers:
         specifier: ^7.3.2
         version: 7.3.2
 
+  services/notification:
+    dependencies:
+      '@aws-sdk/client-sesv2':
+        specifier: ^3.1175.0
+        version: 3.1175.0
+      '@aws-sdk/client-sqs':
+        specifier: ^3.1175.0
+        version: 3.1175.0
+      '@catalog/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      nodemailer:
+        specifier: ^10.6.1
+        version: 10.6.1
+      pg:
+        specifier: ^8.23.1
+        version: 8.23.1
+      pino:
+        specifier: ^10.4.0
+        version: 10.4.0
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/nodemailer':
+        specifier: ^8.0.2
+        version: 8.0.2
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
+
 packages:
+
+  '@aws-sdk/client-sesv2@3.1175.0':
+    resolution: {integrity: sha512-oxIfaX2daPBG1/EIwmuLzB3T+hKjIIRQljOLzfvdPdU1/hNhcIwOQS+xUkV/5JLpP8CBHIdTaP+xlXeFHGfsQw==}
+    engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-sqs@3.1175.0':
     resolution: {integrity: sha512-Yh5+5HcVlN5ae2UkTdru5T4ObdiFHP3qwg6s2F3ZP/vW5MxtCHP1BWQH8wPZeKTCgi9XmUtBo25HjhPqnkdylw==}
@@ -407,6 +442,9 @@ packages:
 
   '@types/node@22.20.5':
     resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
+
+  '@types/nodemailer@8.0.2':
+    resolution: {integrity: sha512-c7M5ox8p0nEOfbJ2E9Qcmt8/QCu/VzsiAhzBiZbvky2PhKZDHpKB3sQHBM5MEZNkCfBOaS6S9//AGPRTNB7IaA==}
 
   '@types/pg@8.23.1':
     resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
@@ -1091,6 +1129,10 @@ packages:
     resolution: {integrity: sha512-NMPBRMJgiQHjbd8phG3Vebdx4kZ1H121rbl5IkMqeOsahptB9BKo/d7oJ3zTXqTgagn2bWlNSXkh0QUGM31RYg==}
     engines: {node: '>=18'}
 
+  nodemailer@10.6.1:
+    resolution: {integrity: sha512-d7kfFfS/tR4Aca+SBvRaQ+MXKNv7d2JiRe5TxaRcFT/kYMh4GGPnW9aKksTIEvyEbA7d/7HYWE4YPDEHxzJj/g==}
+    engines: {node: '>=20.0.0'}
+
   object-inspect@1.14.0:
     resolution: {integrity: sha512-IVgHNlp/jwQX271+Xzoq9LZNTWXxZK+cEOrGBOBxXNbn7fapnZ+Ts6TVMgNOuAezwG2wdtnMX97tTPK6VEnuOQ==}
     engines: {node: '>= 0.4'}
@@ -1538,6 +1580,18 @@ packages:
 
 snapshots:
 
+  '@aws-sdk/client-sesv2@3.1175.0':
+    dependencies:
+      '@aws-sdk/core': 3.981.1
+      '@aws-sdk/credential-provider-node': 3.972.98
+      '@aws-sdk/signature-v4-multi-region': 3.996.52
+      '@aws-sdk/types': 3.975.1
+      '@smithy/core': 3.41.0
+      '@smithy/fetch-http-handler': 5.8.1
+      '@smithy/node-http-handler': 4.14.2
+      '@smithy/types': 4.20.0
+      tslib: 2.9.1
+
   '@aws-sdk/client-sqs@3.1175.0':
     dependencies:
       '@aws-sdk/core': 3.981.1
@@ -1930,6 +1984,10 @@ snapshots:
   '@types/node@22.20.5':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/nodemailer@8.0.2':
+    dependencies:
+      '@types/node': 22.20.5
 
   '@types/pg@8.23.1':
     dependencies:
@@ -2636,6 +2694,8 @@ snapshots:
   negotiator@1.1.0:
     dependencies:
       content-type: 2.1.0
+
+  nodemailer@10.6.1: {}
 
   object-inspect@1.14.0: {}
 

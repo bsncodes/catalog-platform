@@ -62,6 +62,43 @@ services:
     restart: unless-stopped
     # No host ports: reached only through the gateway (public :3000) and by Notification Service (internal :3001).
 
+  notification-migrate:
+    build: { context: ., dockerfile: services/notification/Dockerfile }
+    image: catalog-platform/notification-service:local
+    command: ["node", "dist/db/migrate.js"]
+    environment:
+      DATABASE_URL: postgres://notification_svc:${NOTIFICATION_DB_PASSWORD}@postgres:5432/notification
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  # Private worker: consumes SQS, sends email, calls Catalog's internal API. Never published or routed.
+  notification:
+    image: catalog-platform/notification-service:local
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://notification_svc:${NOTIFICATION_DB_PASSWORD}@postgres:5432/notification
+      SQS_ENDPOINT: http://elasticmq:9324
+      SQS_REGION: eu-west-1
+      SQS_QUEUE_NAME: catalog-enquiry-events
+      SQS_MAX_RECEIVE_COUNT: 5
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+      EMAIL_PROVIDER: smtp
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      EMAIL_FROM: ${EMAIL_FROM:?set EMAIL_FROM in .env}
+      SALES_RECIPIENT_PRODUCT: ${SALES_RECIPIENT_PRODUCT:?set SALES_RECIPIENT_PRODUCT in .env}
+      SALES_RECIPIENT_CATEGORY: ${SALES_RECIPIENT_CATEGORY:?set SALES_RECIPIENT_CATEGORY in .env}
+      CATALOG_INTERNAL_URL: http://catalog:3001
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN in .env}
+    depends_on:
+      notification-migrate: { condition: service_completed_successfully }
+      elasticmq: { condition: service_started }
+      mailpit: { condition: service_healthy }
+      catalog: { condition: service_healthy }
+    restart: unless-stopped
+
   mailpit:
     image: axllent/mailpit:v1.27
     ports:

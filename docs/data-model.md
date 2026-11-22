@@ -198,15 +198,18 @@ Only add indexes justified by query patterns. Validate index choices with actual
 | `enquiry_id` | `UUID` | NOT NULL | Catalog enquiry ID carried by the event; informational cross-service reference, not a cross-database foreign key. |
 | `event_type` | `TEXT` | NOT NULL | Event type consumed, initially `CATALOG_ENQUIRY_SUBMITTED`. |
 | `event_version` | `INTEGER` | NOT NULL | Event version validated by the consumer. |
+| `entity_type` | `TEXT` | NOT NULL | `PRODUCT` or `CATEGORY`, for operational queries without the payload. |
+| `correlation_id` | `TEXT` | NULL | Correlation ID carried by the event, used in callback logs and headers. |
 | `email_status` | `TEXT` | NOT NULL | `PENDING`, `SENT` or `FAILED`. |
-| `callback_status` | `TEXT` | NULL | `PENDING` or `COMPLETED`; `NULL` means no successful email exists yet to report. |
+| `callback_status` | `TEXT` | NULL | `PENDING`, `COMPLETED` or `FAILED` (terminal, monitored; ASM-033); `NULL` means no successful email exists yet to report. |
 | `provider_message_id` | `TEXT` | NULL | Provider reference after successful acceptance. |
 | `attempt_count` | `INTEGER` | NOT NULL | Number of email send attempts recorded. |
 | `callback_attempt_count` | `INTEGER` | NOT NULL | Number of Catalog callback attempts recorded. |
 | `last_email_attempt_at` | `TIMESTAMPTZ` | NULL | Time of the last email attempt. |
 | `last_callback_attempt_at` | `TIMESTAMPTZ` | NULL | Time of the last callback attempt. |
 | `email_sent_at` | `TIMESTAMPTZ` | NULL | Time successful provider acceptance was recorded. |
-| `next_callback_retry_at` | `TIMESTAMPTZ` | NULL | Next eligible time for durable callback retry. |
+| `email_lease_until` | `TIMESTAMPTZ` | NULL | Per-event send lease; stops concurrent duplicate deliveries from both sending (ASM-034). |
+| `next_callback_retry_at` | `TIMESTAMPTZ` | NULL | Next eligible time for durable callback retry; also used as the claim lease. |
 | `callback_completed_at` | `TIMESTAMPTZ` | NULL | Time Catalog Service confirmed a safe callback outcome. |
 | `last_email_error` | `TEXT` | NULL | Sanitized email failure detail; do not store secrets or full message content. |
 | `last_callback_error` | `TEXT` | NULL | Sanitized callback failure detail. |
@@ -218,7 +221,7 @@ Only add indexes justified by query patterns. Validate index choices with actual
 - Primary key on `id`.
 - Unique constraint on `event_id`.
 - `email_status` is limited to `PENDING`, `SENT` or `FAILED`.
-- `callback_status` is either `NULL`, `PENDING` or `COMPLETED` in the recommended representation. `NULL` indicates that successful email delivery has not yet been recorded and no success callback is pending.
+- `callback_status` is `NULL`, `PENDING`, `COMPLETED` or `FAILED` (implemented representation; `FAILED` added by ASM-033). `NULL` indicates that successful email delivery has not yet been recorded and no success callback is pending.
 - Attempt counters must be non-negative.
 - A successful provider acceptance must be durably stored as `email_status = SENT` with the provider message ID before callback processing begins.
 - Once `email_status = SENT`, callback failure or redelivery must not cause another email send.

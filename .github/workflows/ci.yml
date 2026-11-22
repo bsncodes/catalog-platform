@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v6 # version comes from package.json "packageManager"
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -52,8 +52,8 @@ jobs:
       TEST_ADMIN_DATABASE_URL: postgres://postgres:ci-admin-password@127.0.0.1:5432/postgres
       TEST_SQS_ENDPOINT: http://127.0.0.1:9324
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -82,11 +82,12 @@ jobs:
           sed -i 's/^PRODUCT_PROVIDER=.*/PRODUCT_PROVIDER=fixture/' .env
       - name: Build and start the stack
         run: docker compose up -d --build
-      - name: Wait for Catalog Service to become healthy
+      - name: Wait for Catalog and Notification services to become healthy
         run: |
           for _ in $(seq 1 60); do
-            status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q catalog)" 2>/dev/null || true)
-            [ "$status" = "healthy" ] && exit 0
+            catalog=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q catalog)" 2>/dev/null || true)
+            notification=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q notification)" 2>/dev/null || true)
+            [ "$catalog" = "healthy" ] && [ "$notification" = "healthy" ] && exit 0
             sleep 2
           done
           docker compose ps
@@ -102,14 +103,20 @@ jobs:
             --post-data '{"entity":{"type":"PRODUCT","id":"3"},"customer":{"name":"CI Smoke","email":"ci@example.com","phone":"+919876543210"}}' \
             http://127.0.0.1:3000/api/catalog/enquiries)
           echo "$response" | jq -e '.status == "RECEIVED"'
-          enquiry_id=$(echo "$response" | jq -r '.enquiryId')
-          for _ in $(seq 1 15); do
-            published=$(docker compose exec -T postgres psql -U postgres -d catalog -tAc \
-              "select count(*) from outbox_events where aggregate_id = '$enquiry_id' and published_at is not null")
-            [ "$published" = "1" ] && exit 0
+          echo "$response" | jq -r '.enquiryId' > enquiry-id.txt
+      - name: Verify asynchronous notification and lifecycle (SQS -> email -> callback -> PROCESSED)
+        run: |
+          set -euo pipefail
+          enquiry_id=$(cat enquiry-id.txt)
+          for _ in $(seq 1 30); do
+            status=$(docker compose exec -T postgres psql -U postgres -d catalog -tAc "select status from catalog_enquiries where id = '$enquiry_id'")
+            [ "$status" = "PROCESSED" ] && break
             sleep 1
           done
-          echo "Outbox event was not published to ElasticMQ" && exit 1
+          test "$status" = "PROCESSED"
+          docker compose exec -T postgres psql -U postgres -d notification -tAc \
+            "select email_status || '/' || callback_status from notification_deliveries where enquiry_id = '$enquiry_id'" | grep -qx 'SENT/COMPLETED'
+          curl -sf "http://127.0.0.1:8025/api/v1/search?query=$enquiry_id" | jq -e '.messages_count == 1 and .messages[0].To[0].Address == "product-sales@example.com"'
       - name: Service logs
         if: always()
         run: docker compose logs --no-color
