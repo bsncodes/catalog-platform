@@ -11,7 +11,7 @@ COPY packages/contracts packages/contracts
 COPY apps/web apps/web
 RUN pnpm --filter @catalog/contracts build && pnpm --filter @catalog/web build
 
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 COPY infra/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /repo/apps/web/dist /usr/share/nginx/html
 EXPOSE 8080
