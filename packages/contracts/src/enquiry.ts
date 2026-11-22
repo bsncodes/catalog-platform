@@ -58,7 +58,8 @@ export const enquiryRequestSchema = z
   })
   .strict();
 
-export type EnquiryRequest = z.output<typeof enquiryRequestSchema>;
+/** Parsed request; `message` is genuinely optional (absent when blank). */
+export type EnquiryRequest = Omit<z.output<typeof enquiryRequestSchema>, 'message'> & { message?: string };
 export type EnquiryRequestInput = z.input<typeof enquiryRequestSchema>;
 
 export const ENQUIRY_STATUSES = ['RECEIVED', 'PROCESSED', 'RESOLVED'] as const;

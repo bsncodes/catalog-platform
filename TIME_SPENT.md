@@ -57,9 +57,7 @@ Add one row for each focused work session. Use additional rows when a phase span
 
 | Session | Date | Phase | Start (IST) | End (IST) | Breaks / unrelated interruption (min) | Active project time (min) | Work performed and outcome | Evidence |
 |---|---|---|---|---|---:|---:|---|---|
-| S-001 | Pending | Pending | Pending | Pending | — | — | Execution session not yet logged | — |
-| S-002 | Pending | Pending | Pending | Pending | — | — | Execution session not yet logged | — |
-| S-003 | Pending | Pending | Pending | Pending | — | — | Execution session not yet logged | — |
+| S-001 | 2026-11-22 | 0, 1, 2, 6 (interleaved) | 13:32 | 13:54 | 0 | 22 | Repository inspection; workspace + contracts + infra (PR 1); Catalog Service implementation and tests; PR strategy changed to sequential PRs (ADR-017, owner decision at ~13:44); PR #1 opened, reviewed (CHANGES REQUIRED, 2×P2 + 3×P3), fixed, re-reviewed (REVIEW PASSED); owner merged PR #1 at 13:53 | Start `date` 13:32:41; commits d6d0378, 9ccbd8b, PR #1 reviews 6011199598 / 6011207779 |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 
@@ -75,14 +73,14 @@ Complete this section using actual timestamps and links.
 
 | Milestone | Actual date and time (IST) | Evidence / reference |
 |---|---|---|
-| Repository inspection completed | Pending | Pending |
-| Feature branch created | Pending | Pending |
+| Repository inspection completed | 2026-11-22 13:33 | Feature branch created after reading CLAUDE/PLAN/contracts docs |
+| Feature branch created | 2026-11-22 13:33 (`feat/catalog-platform`); replaced by per-PR branches from 13:47 (ADR-017) | `git checkout -b` output |
 | Local environment starts successfully | Pending | Pending |
 | Catalogue experience completed | Pending | Pending |
 | Enquiry-to-email happy path verified | Pending | Pending |
 | Failure and retry paths verified | Pending | Pending |
-| Assessment PR opened | Pending | Pending |
-| Independent reviewer verdict received | Pending | Pending |
+| Assessment PR opened | PR #1 (setup) opened 2026-11-22 ~13:48–13:50; merged by owner 13:53 | https://github.com/bsncodes/catalog-platform/pull/1 |
+| Independent reviewer verdict received | PR #1: CHANGES REQUIRED then REVIEW PASSED (9ccbd8b) before 13:53 | PR #1 reviews |
 | Required corrections completed | Pending | Pending |
 | Final verification completed | Pending | Pending |
 

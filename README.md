@@ -10,20 +10,24 @@ Implementation is delivered as sequential pull requests into `main` (see `DECISI
 
 | PR | Branch | Scope | Status |
 |---|---|---|---|
-| 1 | `chore/setup` | pnpm workspace, TypeScript/ESLint, shared contracts, PostgreSQL/ElasticMQ/Mailpit | In review |
-| 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback | Pending |
+| 1 | `chore/setup` | pnpm workspace, TypeScript/ESLint, shared contracts, PostgreSQL/ElasticMQ/Mailpit | Merged (#1) |
+| 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback | In review |
 | 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | Pending |
 | 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | Pending |
 | 5 | `test/e2e-docs` | End-to-end verification and final documentation | Pending |
 
-After PR 1 only the local infrastructure is runnable:
+Current runnable state (after PR 2): infrastructure plus Catalog Service (no host port yet; the Gateway arrives in PR 4).
 
 ```bash
 cp .env.example .env
-docker compose up -d          # postgres (healthy), elasticmq, mailpit (healthy)
+docker compose up -d --build --wait   # postgres, elasticmq, mailpit, catalog-migrate (one-shot), catalog
 pnpm install
-pnpm typecheck && pnpm lint && pnpm test
+pnpm typecheck && pnpm lint && pnpm test   # unit/API tests, no external dependencies
+pnpm test:integration                      # needs the compose postgres + elasticmq running
+docker compose exec catalog wget -qO- http://127.0.0.1:3000/api/catalog/products/featured
 ```
+
+Set `PRODUCT_PROVIDER=fixture` in `.env` to run fully offline against the committed product snapshot.
 
 ## Assessment scope
 

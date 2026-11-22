@@ -1,0 +1,35 @@
+{
+  "name": "@catalog/catalog-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/server.js",
+    "migrate": "node dist/db/migrate.js",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.1175.0",
+    "@catalog/contracts": "workspace:*",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.5",
+    "helmet": "^8.3.0",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  },
+  "files": [
+    "dist",
+    "migrations",
+    "fixtures"
+  ]
+}
