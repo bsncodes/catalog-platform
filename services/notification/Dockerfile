@@ -1,5 +1,5 @@
 # Build context: repository root.
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 RUN corepack enable
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
@@ -11,7 +11,7 @@ COPY services/notification services/notification
 RUN pnpm --filter @catalog/contracts build && pnpm --filter @catalog/notification-service build \
   && pnpm --filter @catalog/notification-service deploy --prod --legacy /out
 
-FROM node:22-alpine
+FROM node:26-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /out .
