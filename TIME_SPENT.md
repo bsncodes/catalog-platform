@@ -153,7 +153,7 @@ Complete this section using actual timestamps and links.
 | Metric | Actual result |
 |---|---|
 | Total active project time | **121 minutes** implementation (S-001…S-006); plus about 180 min pre-implementation preparation reported separately (§5) |
-| Total wall-clock span | 13:32:41 to the session close, across S-001…S-006; only in-session time is counted. Pauses between sessions (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05, 21:42:24–21:50:55) are excluded (owner's rule, §4) |
+| Total wall-clock span | 13:32:41 to the session close, across S-001…S-006; only in-session time is counted. Pauses between sessions (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05, 21:42:24–21:50:55) are excluded (owner's rule, §4). The 15:36–21:01 pause was a wait of about 5 hours for the token-limit usage window to reset |
 | Total breaks / unrelated interruptions | Five pauses (15:08:17–15:30:27, 15:36:29–21:01:11, 21:03:49–21:31:43, 21:35:57–21:40:05, 21:42:24–21:50:55), excluded from the total |
 | Difference from 180-minute target | -59 minutes (implementation; under target) |
 | Phases completed within target | Phases ran interleaved; approximate split in §5.2; everything finished inside the 180-minute cap |
