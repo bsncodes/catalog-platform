@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { createInternalApp, createPublicApp } from '../src/app.js';
 import { CatalogService } from '../src/products/catalogService.js';
-import { ProviderError } from '../src/errors.js';
+import { Errors, ProviderError } from '../src/errors.js';
 import type { ProductProvider } from '../src/products/provider.js';
 import { FEATURED, fixtureProvider, silentLogger } from './helpers.js';
 
@@ -143,8 +143,19 @@ describe('GET /api/catalog/enquiries/:enquiryId (status)', () => {
     const { app, getEnquiryStatus } = buildApp();
     const res = await request(app).get('/api/catalog/enquiries/not-a-uuid');
     expect(res.status).toBe(400);
+    expect(res.headers['cache-control']).toBe('no-store');
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
     expect(getEnquiryStatus).not.toHaveBeenCalled();
+  });
+
+  it('maps a database failure to 503 with a read-specific message and no-store (RV6-03)', async () => {
+    const { app, getEnquiryStatus } = buildApp();
+    getEnquiryStatus.mockRejectedValueOnce(Errors.databaseReadUnavailable(new Error('connection terminated')));
+    const res = await request(app).get(`/api/catalog/enquiries/${STATUS_ID}`);
+    expect(res.status).toBe(503);
+    expect(res.headers['cache-control']).toBe('no-store');
+    expect(res.body.error).toMatchObject({ code: 'DATABASE_UNAVAILABLE', message: 'The service is temporarily unable to read data. Please retry.' });
+    expect(JSON.stringify(res.body)).not.toContain('connection terminated');
   });
 
   it('is rate limited', async () => {

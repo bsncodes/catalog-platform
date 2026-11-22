@@ -14,7 +14,8 @@ Implementation is delivered as sequential pull requests into `main` (see `DECISI
 | 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback, CI | Merged (#2) |
 | 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | Merged (#7) |
 | 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | Merged (#9); P3 fixes carried in #12 |
-| 5 | `test/e2e-docs` | End-to-end verification, carried PR 4 fixes and final documentation | Open (#12, submission PR) |
+| 5 | `test/e2e-docs` | End-to-end verification, carried PR 4 fixes and final documentation | Merged (#12) |
+| 6 | `feat/enquiry-status-api` | Read-only enquiry status API (owner request after #12) | Open (#13, submission PR) |
 
 Running the complete application:
 
@@ -278,7 +279,7 @@ Run from the repository root after `pnpm install` (Node 22+, pnpm 10.17):
 | Suite | Tests |
 |---|---|
 | Contracts (unit) | 23 |
-| Catalog Service (unit/API) | 48 |
+| Catalog Service (unit/API) | 50 |
 | Catalog Service (integration) | 20 |
 | Notification Service (unit) | 24 |
 | Notification Service (integration) | 16 |
@@ -353,7 +354,7 @@ Known limitations of the implementation:
 - [x] Source code and tests included; no secrets committed (`.env` is git-ignored).
 - [x] README reflects actual ports, environment variables, test commands and limitations.
 - [x] `AI_USAGE.md` and `TIME_SPENT.md` completed from actual evidence.
-- [x] Feature branches pushed and PRs opened into `main` (sequential PRs, ADR-017); the submission PR (#12) is left open.
+- [x] Feature branches pushed and PRs opened into `main` (sequential PRs, ADR-017); the submission PR (#13) is left open.
 
 ## Further work
 

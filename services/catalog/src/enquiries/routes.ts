@@ -59,11 +59,14 @@ export function publicEnquiryRoutes(enquiries: Pick<EnquiryService, 'createEnqui
     },
   });
 
-  router.get('/enquiries/:enquiryId', statusLimiter, async (req, res) => {
+  router.get('/enquiries/:enquiryId', (_req, res, next) => {
+    // Applies to every outcome (200, 400, 404, 429, 503): status lookups must never be cached (RV6-03).
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  }, statusLimiter, async (req, res) => {
     const enquiryId = String(req.params.enquiryId ?? '');
     if (!UUID_PATTERN.test(enquiryId)) throw Errors.validation('The enquiry identifier is malformed.', [{ field: 'enquiryId', message: 'Must be a UUID.' }]);
     const status = await enquiries.getEnquiryStatus(enquiryId.toLowerCase());
-    res.setHeader('Cache-Control', 'no-store');
     res.json({ data: status });
   });
 

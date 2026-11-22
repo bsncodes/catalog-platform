@@ -914,7 +914,7 @@ SMTP/SES acceptance and the PostgreSQL ledger write cannot be made atomic. If th
 
 **Source:** Owner request on 2026-11-22 (15:30 IST): an API to check an enquiry's status by ID instead of querying the database.
 **Impact:** MEDIUM
-**Status:** VERIFIED (covered by `services/catalog/test/publicApi.test.ts`, `test/integration/enquiryLifecycle.test.ts`, the E2E journey and the CI smoke test)
+**Status:** VERIFIED (covered by `services/catalog/test/publicApi.test.ts`, `test/enquiryService.test.ts`, `test/integration/enquiryLifecycle.test.ts`, the E2E journey and the CI smoke test. CI first ran on this code in PR #13 at `2338924`: 6/6 green)
 
 **Ambiguity**
 The original contract exposed enquiry creation only, and customer authentication is out of scope (ASM-029).

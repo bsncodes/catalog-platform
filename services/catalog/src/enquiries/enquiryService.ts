@@ -121,7 +121,7 @@ export class EnquiryService {
     try {
       row = await enquiryRepository.findStatus(this.pool, enquiryId);
     } catch (error) {
-      throw Errors.databaseUnavailable(error);
+      throw Errors.databaseReadUnavailable(error);
     }
     if (!row) throw Errors.notFound('ENQUIRY_NOT_FOUND', 'The enquiry does not exist.');
     return {

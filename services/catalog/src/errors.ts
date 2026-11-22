@@ -25,6 +25,8 @@ export const Errors = {
   unauthorized: () => new AppError(401, 'UNAUTHORIZED', 'Authentication is required.'),
   databaseUnavailable: (cause: unknown) =>
     new AppError(503, 'DATABASE_UNAVAILABLE', 'The service is temporarily unable to store data. Please retry.', undefined, { cause }),
+  databaseReadUnavailable: (cause: unknown) =>
+    new AppError(503, 'DATABASE_UNAVAILABLE', 'The service is temporarily unable to read data. Please retry.', undefined, { cause }),
 };
 
 /** Errors raised at the product-provider boundary. Mapped to 502/503/504 by the HTTP layer. */
