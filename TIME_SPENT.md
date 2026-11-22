@@ -1,7 +1,7 @@
 # Catalog Platform — Time Spent
 
 **Version:** 1.0  
-**Status:** In progress — measured from 13:32:41 IST on 2026-11-22  
+**Status:** Reconciled — single continuous session 2026-11-22 13:32:41–15:01 IST (closing row added after the final re-review)  
 **Project:** AI-Native Engineer Code Challenge  
 **Planning baseline:** 180 minutes (from `PLAN.md`)  
 **Tracking rule:** Record measured time only; never copy target time into the actual column.
@@ -47,7 +47,7 @@ The targets below are copied from the approved phase allocation in `PLAN.md`. Ph
 | 5 | Testing and integration | 20 | Interleaved | — | See session log §4 |
 | 6 | PR and independent review | 15 | Interleaved | — | See session log §4 |
 | 7 | Final corrections and documentation | 10 | Interleaved | — | See session log §4 |
-| | **Total so far (13:32:41–14:43, no pauses)** | **180** | **71** | **in progress** | **Hard stop 16:32:41 IST; final total reconciled at session end** |
+| | **Total (13:32:41–15:01, no pauses)** | **180** | **88** | **-92** | **Within the 180-minute cap; hard stop was 16:32:41 IST** |
 
 **Variance formula:** `Actual minutes − Target minutes`. A positive value is an overrun; a negative value is time saved. Do not report a total actual duration while any material execution time is untracked without clearly qualifying the total.
 
@@ -62,6 +62,7 @@ Add one row for each focused work session. Use additional rows when a phase span
 | S-001 | 2026-11-22 | 0, 1, 2, 6 (interleaved) | 13:32 | 13:54 | 0 | 22 | Repository inspection; workspace + contracts + infra (PR 1); Catalog Service implementation and tests; PR strategy changed to sequential PRs (ADR-017, owner decision at ~13:44); PR #1 opened, reviewed (CHANGES REQUIRED, 2×P2 + 3×P3), fixed, re-reviewed (REVIEW PASSED); owner merged PR #1 at 13:53 | Start `date` 13:32:41; commits d6d0378, 9ccbd8b, PR #1 reviews 6011199598 / 6011207779 |
 | S-001 (cont.) | 2026-11-22 | 2, 3, 4, 5, 6 (interleaved) | 13:54 | 14:33 | 0 | 39 | PR #2 opened; CI/CodeQL/Dependabot added at owner request; RV2-01..06 fixed over three review rounds; owner merged PR #2 (~14:17). Notification Service built and tested; PR #7 opened, RV3-01..03 fixed, re-reviewed twice (REVIEW PASSED at 7d78b0d). React frontend + Nginx gateway built and verified (PR 4, local). Playwright E2E 5/5; fresh `down -v` → ready in 145s → E2E 5/5 with live Fake Store | PR #2 reviews 6011233839…6011294790; PR #7 reviews 6011373403…6011412047; CI runs on each PR |
 | S-001 (cont.) | 2026-11-22 | 6, 7 | 14:33 | 14:43 | 0 | 10 | Checkpoint at the owner's request ("note all this TIME_SPEND and AI_USAGE"): recorded owner directions, permission events, reviewer runtimes and this time log; adopted the owner's time-accounting rule. PR #7 awaiting owner merge (time counted); PRs 4–5 ready locally | Commits on `test/e2e-docs` |
+| S-001 (cont.) | 2026-11-22 | 3, 6, 7 | 14:43 | 15:01 | 0 | 17 | Owner merged #7; PR #9 opened, reviewed (REVIEW PASSED + optional P3s); owner merged #9 while its P3 fixes were being pushed, so the fixes were carried into #12; RV4-05 fixed; PR #12 opened; final review RV5 (docs-only CHANGES REQUIRED) addressed: time log reconciled, AI_USAGE corrected, README cleaned up, next steps added, gateway 502 treated as unknown outcome, E2E env fallback | PR #9 reviews 6011463722/6011475023; PR #12 review 6011496306; CI green on #12 incl. E2E |
 
 Add rows as required; do not leave placeholder rows in the final submitted record if no session took place.
 
@@ -77,7 +78,7 @@ Add rows as required; do not leave placeholder rows in the final submitted recor
 
 ### 4.2 AI tool runtime (diagnostic, overlapping)
 
-Reviewer subagent runs totalled about 28 minutes of wall time across 9 runs (see `AI_USAGE.md` §6). They ran **in parallel** within the session's wall clock, so they add nothing to the total.
+Reviewer subagent runs totalled about 39 minutes of wall time across 12 runs (see `AI_USAGE.md` §6). They ran **in parallel** within the session's wall clock, so they add nothing to the total.
 
 ## 5. Planning and Documentation Preparation
 
@@ -97,43 +98,41 @@ Complete this section using actual timestamps and links.
 | Catalogue experience completed | 2026-11-22 ~14:20 (frontend + gateway verified locally) | RTL 14/14; gateway curls; E2E steps 1–4 |
 | Enquiry-to-email happy path verified | 2026-11-22 ~14:11 (backend), ~14:24 (browser E2E) | Enquiry → Mailpit → PROCESSED locally; Playwright journey |
 | Failure and retry paths verified | 2026-11-22 ~14:12 | Notification integration tests (email failure, DLQ, callback retry after restart, circuit breaker) |
-| Assessment PR opened | PR #1 (setup) opened 2026-11-22 ~13:48–13:50; merged by owner 13:53 | https://github.com/bsncodes/catalog-platform/pull/1 |
-| Independent reviewer verdict received | PR #1: CHANGES REQUIRED then REVIEW PASSED (9ccbd8b) before 13:53 | PR #1 reviews |
-| Required corrections completed | Pending | Pending |
-| Final verification completed | Pending | Pending |
+| Assessment PRs opened | #1 ~13:49, #2 ~13:56, #7 ~14:19, #9 14:44, #12 (submission, left open) 14:53 | GitHub PRs |
+| Independent reviewer verdicts received | Every PR; latest: #12 final review 14:58 (docs-only CHANGES REQUIRED) | `AI_USAGE.md` §6 |
+| Required corrections completed | 2026-11-22 15:01 (RV5 corrections; all earlier P2/P3 fixed per PR) | Commits on #12; `AI_USAGE.md` §6 |
+| Final verification completed | 2026-11-22 15:01 (local gates) + final re-review (see closing row) | typecheck/lint/unit/integration/E2E; CI on #12 |
 
 ## 7. Time-Box Review
 
-Complete after implementation and review are finished.
-
 | Metric | Actual result |
 |---|---|
-| Total active project time | Pending — calculate from measured sessions |
-| Total wall-clock span | Pending — derive from first and last timestamps |
-| Total breaks / unrelated interruptions | Pending |
-| Difference from 180-minute target | Pending |
-| Phases completed within target | Pending |
-| Main causes of overruns or savings | Pending |
-| Work deferred or left incomplete | Pending — cross-reference `PLAN.md` and known limitations |
+| Total active project time | **88 minutes** (13:32:41–15:01 IST), plus the short closing row after the final re-review |
+| Total wall-clock span | Same: one continuous session with no pauses (owner's rule, §4) |
+| Total breaks / unrelated interruptions | 0 |
+| Difference from 180-minute target | -92 minutes (under target) |
+| Phases completed within target | Phases ran interleaved; the whole plan finished inside the 180-minute cap |
+| Main causes of savings | Parallel work: the next service was built while each PR was under review. Shared contracts removed rework. Each reviewer finding was fixed while it was still small. |
+| Work deferred or left incomplete | No functional requirement incomplete. Deferred by design: CD to AWS, CloudWatch alarms, authenticated `RESOLVED` workflow, product cache, permanent-vs-transient email error classification (`DECISIONS.md` §9, README limitations) |
 
 ### Reflection
 
-- **What consumed more time than expected?** Pending.
-- **What was completed faster than expected, and why?** Pending.
-- **Which implementation or verification trade-offs were made?** Pending; link relevant decisions and review findings.
-- **Did the time-box affect quality or scope?** Pending; describe the evidence and any deferred work.
+- **What consumed more time than expected?** Review/fix cycles. In particular RV2-06 (an SDK timeout that only warns), and the PR #9 merge/fix race, which needed fixes carried into #12. Frontend toolchain incompatibilities (plugin-react 6, jsdom 31) also cost a few minutes.
+- **What was completed faster than expected, and why?** The backend services and integration tests. The shared Zod contracts and a fixture provider made tests deterministic, and real PostgreSQL/ElasticMQ in Docker avoided mocks for the critical paths.
+- **Which implementation or verification trade-offs were made?** Log-based monitoring instead of provisioned alarms; an accepted duplicate-email crash window (ASM-034); bearer token instead of IAM/mTLS for the internal callback (ADR-018); no CD (ADR-016).
+- **Did the time-box affect quality or scope?** Not materially. All acceptance criteria and critical failure paths are tested and reviewed. Deferred items are operational hardening, listed in `DECISIONS.md` §9.
 
 ## 8. Before Submission
 
-- [ ] Replace all `Pending` placeholders with measured values or an explicit `Not tracked` explanation.
-- [ ] Ensure phase actuals reconcile with the session log.
-- [ ] Calculate total active project time and variance from 180 minutes.
-- [ ] Explain any untracked preparation time; do not imply it was included in the measured total.
-- [ ] Link commits, tests and PR/reviewer evidence where available.
-- [ ] Ensure claims match `PLAN.md`, `AI_USAGE.md`, the Git history and the final PR.
-- [ ] Remove unused placeholder session rows.
-- [ ] Record incomplete work and limitations honestly.
+- [x] All `Pending` placeholders replaced with measured values.
+- [x] Phase actuals reconcile with the session log (interleaved; the session total is authoritative).
+- [x] Total active time and variance from 180 minutes calculated.
+- [x] Pre-execution planning time (2026-11-21) is untracked and excluded from the total (§5).
+- [x] Commits, tests and PR/reviewer evidence linked.
+- [x] Claims match `AI_USAGE.md`, the git history and the PRs.
+- [x] No placeholder session rows.
+- [x] Incomplete work and limitations recorded.
 
 ---
 
-**Accuracy statement:** This document starts as an unfilled tracking template. No actual implementation duration, execution timestamp, test result or reviewer duration is asserted until it is measured and entered.
+**Accuracy statement:** All times are taken from the system clock (`date`, Asia/Kolkata), commit and PR timestamps, and tool output during the session. Times marked `~` are bounded by neighbouring measured timestamps. Nothing is estimated after the fact.

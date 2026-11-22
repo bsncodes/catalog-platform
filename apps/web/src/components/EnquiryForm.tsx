@@ -123,7 +123,8 @@ export function EnquiryForm({ entityType, entityId, entityName }: Props) {
 function failureMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 429) return 'You have sent several enquiries in a short time. Please wait a minute and try again.';
-    if (error.status === 504 || error.status === 0) {
+    // 502/504 from the gateway or a lost connection: the request may have been committed.
+    if (error.status === 504 || error.status === 502 || error.status === 0) {
       return 'We could not confirm whether your enquiry was received. Please wait a minute before sending it again; if you do not hear from us, resubmit it.';
     }
     return `Your enquiry was not sent. ${error.message}`;

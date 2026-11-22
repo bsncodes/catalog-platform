@@ -56,8 +56,11 @@ describe('EnquiryForm', () => {
     expect(await screen.findByText('Enter a valid phone number.')).toBeInTheDocument();
   });
 
-  it('does not claim "not sent" when the outcome is unknown (504 timeout) (RV4-01)', async () => {
-    mockApi({ 'POST /api/catalog/enquiries': () => ({ status: 504, body: { error: { code: 'UPSTREAM_TIMEOUT', message: 'The catalogue service did not respond in time.' } } }) });
+  it.each([
+    [504, 'UPSTREAM_TIMEOUT'],
+    [502, 'UPSTREAM_BAD_GATEWAY'],
+  ])('does not claim "not sent" when the outcome is unknown (HTTP %i) (RV4-01)', async (status, code) => {
+    mockApi({ 'POST /api/catalog/enquiries': () => ({ status, body: { error: { code, message: 'Gateway failure.' } } }) });
     renderForm();
     await fillValid();
     await userEvent.click(screen.getByRole('button', { name: 'Send enquiry' }));

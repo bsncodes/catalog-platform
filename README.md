@@ -13,10 +13,10 @@ Implementation is delivered as sequential pull requests into `main` (see `DECISI
 | 1 | `chore/setup` | pnpm workspace, TypeScript/ESLint, shared contracts, PostgreSQL/ElasticMQ/Mailpit | Merged (#1) |
 | 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback, CI | Merged (#2) |
 | 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | Merged (#7) |
-| 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | In review (#9) |
-| 5 | `test/e2e-docs` | End-to-end verification and final documentation | Open (submission PR) |
+| 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | Merged (#9); P3 fixes carried in #12 |
+| 5 | `test/e2e-docs` | End-to-end verification, carried PR 4 fixes and final documentation | Open (#12, submission PR) |
 
-Current runnable state (after PR 4): the complete application.
+Running the complete application:
 
 ```bash
 cp .env.example .env
@@ -122,7 +122,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Verified: GitHub Actions' *Docker Compose smoke test* and *End-to-end* jobs run exactly these commands on a fresh checkout for every PR. Migrations run as one-shot `catalog-migrate` / `notification-migrate` jobs, ElasticMQ creates the queue and DLQ from `infra/elasticmq/elasticmq.conf`, services wait for their dependencies, and the gateway becomes healthy once Catalog is ready. The first build takes a few minutes; later starts take seconds.
+Verified: GitHub Actions' *Docker Compose smoke test* and *End-to-end* jobs start the stack from a fresh checkout on every PR, using `cp .env.example .env`, switching `PRODUCT_PROVIDER=fixture` for determinism, then `docker compose up -d --build`. Locally, a clean `docker compose down -v` followed by `up --build` was ready in 145 seconds and passed the E2E suite against the live Fake Store API. Migrations run as one-shot `catalog-migrate` / `notification-migrate` jobs, ElasticMQ creates the queue and DLQ from `infra/elasticmq/elasticmq.conf`, services wait for their dependencies, and the gateway becomes healthy once Catalog is ready. The first build takes a few minutes; later starts take seconds.
 
 ### Local URLs
 
@@ -185,7 +185,7 @@ No AWS credentials should be required for the default local workflow. Production
 
 ## Product and API behaviour
 
-All browser requests go through the API Gateway under `/api/catalog`. The following is the approved initial public API surface; update the exact query parameter names, request/response schemas and error formats from `docs/openapi.yaml` and `docs/api-contracts.md` after those contracts are implemented.
+All browser requests go through the API Gateway under `/api/catalog`. The implemented public API surface is below; full request/response schemas and error codes are in `docs/api-contracts.md` and `docs/openapi.yaml`.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -233,7 +233,8 @@ GitHub Actions run on every pull request to `main` and on pushes to `main`:
 |---|---|---|
 | `ci.yml` | Typecheck, lint and unit tests | `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` |
 | `ci.yml` | Integration tests | `pnpm test:integration` against PostgreSQL 17 and ElasticMQ service containers (outbox atomicity, claim/lease, SQS publish, callback idempotency) |
-| `ci.yml` | Docker Compose smoke test | Builds images, runs migrations via the one-shot job, waits for health, checks featured/category APIs and that an enquiry's outbox event is published to ElasticMQ (offline `fixture` provider) |
+| `ci.yml` | Docker Compose smoke test | Builds images, runs migrations via the one-shot jobs, waits for health, checks the APIs and gateway routing (including 404 for `/internal` and `/health`, and correlation-ID validation), and proves enquiry → ElasticMQ → email in Mailpit → callback → `PROCESSED` (offline `fixture` provider) |
+| `ci.yml` | End-to-end (Playwright) | Starts the full stack and runs `pnpm test:e2e` (customer journey, category enquiry, validation, error and mobile checks); uploads traces on failure |
 | `codeql.yml` | CodeQL | `security-and-quality` static analysis for JavaScript/TypeScript (also weekly) |
 
 Dependabot (`.github/dependabot.yml`) proposes weekly npm, GitHub Actions and Docker base-image updates.
@@ -268,7 +269,7 @@ Run from the repository root after `pnpm install` (Node 22+, pnpm 10.17):
 | `pnpm lint` | ESLint (typescript-eslint, `no-explicit-any` as error) | — |
 | `pnpm test` | Unit/API tests: contracts, Catalog (Supertest, fixture provider), Notification, web (React Testing Library) | — |
 | `pnpm test:integration` | Catalog + Notification against real PostgreSQL and ElasticMQ (isolated `*_it` databases, temporary queues) | `docker compose up -d postgres elasticmq` |
-| `pnpm test:e2e` | Playwright against the full stack through the gateway; checks Mailpit and both databases | `docker compose up -d --build` (`pnpm exec playwright install chromium` once) |
+| `pnpm test:e2e` | Playwright against the full stack through the gateway; checks Mailpit and both databases | `docker compose up -d --build` (`pnpm exec playwright install chromium` once). Uses `.env`, or falls back to `.env.example` for database checks |
 
 ### Results on the final commit
 
@@ -279,7 +280,7 @@ Run from the repository root after `pnpm install` (Node 22+, pnpm 10.17):
 | Catalog Service (integration) | 18 |
 | Notification Service (unit) | 24 |
 | Notification Service (integration) | 16 |
-| Web (React Testing Library) | 16 |
+| Web (React Testing Library) | 17 |
 | End-to-end (Playwright, desktop + mobile Chromium) | 5 |
 
 All of these pass locally, and GitHub Actions runs them on every PR (see *Continuous integration*). The integration and E2E tests cover the failure paths: email failure leaves the enquiry `RECEIVED`, retry exhaustion redrives to the DLQ, a callback failure is retried without resending the email (including after a simulated restart), the circuit breaker behaves correctly in all three states, duplicate and concurrent deliveries are handled, and `RESOLVED` is never regressed.
@@ -314,7 +315,16 @@ The initial scope intentionally excludes:
 - Full production AWS provisioning.
 - SES bounce/delivery-event integration; provider acceptance is the initial success signal.
 
-`RESOLVED` is represented in the domain and transition rules, but a complete authenticated sales-management interface is deferred. The exact implemented limitations must be reviewed and updated before submission.
+`RESOLVED` is represented in the domain and transition rules (`EnquiryService.resolveEnquiry`), but there is no route or UI for it; an authenticated sales workflow is deferred.
+
+Known limitations of the implementation:
+
+- **No continuous delivery.** AWS deployment (ECR/ECS/S3/CloudFront) needs an AWS account and an OIDC role. The target is documented in `docs/deployment.md`, not automated.
+- **Alerting is log-based.** `callback_status = FAILED` and DLQ depth are logged and queryable. CloudWatch alarms are not provisioned.
+- **Duplicate-email window (ASM-034).** A crash between provider acceptance and the ledger commit can cause one resend on redelivery. Leases and enforced timeouts narrow the window; nothing eliminates it.
+- **No product cache (ASM-027).** Every catalogue request calls the provider.
+- **Email provider errors are all treated as retryable.** Permanent SES rejections still go through the SQS retries before reaching the DLQ.
+- **Frontend bundle** includes all of Zod (about 50 kB gzip).
 
 ## Project documentation
 
@@ -328,26 +338,21 @@ The initial scope intentionally excludes:
 | [`AI_USAGE.md`](./AI_USAGE.md) | Actual AI tools/models, key prompts or moments, mistakes and corrections. |
 | [`TIME_SPENT.md`](./TIME_SPENT.md) | Actual measured time across planning, building, testing and reviewing. |
 | `PR_DESCRIPTION.md` | Pull Request summary, test evidence and known limitations (created for the submission). |
-| `docs/openapi.yaml` | Machine-readable API contract (to be added/verified with implementation). |
-| `docs/api-contracts.md` | API request/response and error contract details (to be added/verified with implementation). |
+| `docs/openapi.yaml` | Machine-readable API contract. |
+| `docs/api-contracts.md` | API request/response and error contract details. |
 
 ## Assessment submission checklist
 
-Before sending the repository to the reviewer:
-
-- [ ] Replace all `VERIFY AFTER IMPLEMENTATION` markers with accurate, tested details.
-- [ ] Verify the application starts from a clean checkout in under 10 minutes using the documented commands.
-- [ ] Confirm the five original customer acceptance scenarios are demonstrable.
-- [ ] Confirm Fake Store API is called only by Catalog Service.
-- [ ] Confirm the full product enquiry journey, including the email in Mailpit, works locally.
-- [ ] Verify email failure and callback-retry behaviour; do not resend a successfully accepted email because of a callback failure.
-- [ ] Include source code and tests; do not commit secrets.
-- [ ] Update this README with actual ports, environment variables, test commands and remaining limitations.
-- [ ] Complete `AI_USAGE.md` and `TIME_SPENT.md` using actual evidence; do not fabricate tool usage, mistakes, test results, review outcomes or durations.
-- [ ] Push each feature branch and open its PR targeting `main` (sequential PRs, ADR-017).
-- [ ] Leave the PR open and unmerged.
-- [ ] Record the actual independent PR review verdict and reviewed commit SHA; do not claim review completion before it occurs.
+- [x] Application starts from a clean checkout with the documented commands (CI smoke and E2E jobs; 145 s locally including image builds).
+- [x] The five original customer acceptance scenarios are demonstrable (E2E test 1; `PR_DESCRIPTION.md`).
+- [x] Fake Store API is called only by Catalog Service (E2E asserts all browser API calls are same-origin `/api/catalog/*`).
+- [x] The full product enquiry journey, including the email in Mailpit and `PROCESSED`, works locally and in CI.
+- [x] Email failure and callback-retry behaviour verified by integration tests; a successful email is never resent because of a callback failure.
+- [x] Source code and tests included; no secrets committed (`.env` is git-ignored).
+- [x] README reflects actual ports, environment variables, test commands and limitations.
+- [x] `AI_USAGE.md` and `TIME_SPENT.md` completed from actual evidence.
+- [x] Feature branches pushed and PRs opened into `main` (sequential PRs, ADR-017); the submission PR (#12) is left open.
 
 ## Further work
 
-For the significant design trade-offs, deferred work and next steps with additional time, see [`DECISIONS.md`](./DECISIONS.md). The implementation plan and exit gates are in [`PLAN.md`](./PLAN.md).
+For design trade-offs see [`DECISIONS.md`](./DECISIONS.md). For how the design grows beyond the proof of concept, and what we would do with another day, see [`DECISIONS.md` §9, *Next Steps*](./DECISIONS.md#9-next-steps-with-another-day-and-beyond-the-proof-of-concept). The implementation plan and exit gates are in [`PLAN.md`](./PLAN.md).

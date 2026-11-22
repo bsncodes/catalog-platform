@@ -1,9 +1,9 @@
 # AI Usage Notes
 
 **Version:** 1.0  
-**Status:** Working record — planning and documentation stage  
+**Status:** Final record for the 2026-11-22 implementation session  
 **Project:** AI-Native Engineer Code Challenge for Catalog Platform
-**Last updated:** 2026-11-21
+**Last updated:** 2026-11-22
 
 > **Accuracy rule:** This file distinguishes AI tools that have already been used from tools selected for the implementation workflow. Update it as implementation, testing and review happen. Do not present planned work, generated code, prompts, reviews or test results as completed evidence.
 
@@ -21,7 +21,7 @@ The human owner remains responsible for the submitted source code, design decisi
 | Claude Code (VS Code extension) — Claude Opus 5.5 (`claude-opus-5-5`) | Used, 2026-11-22 from 13:32 IST | Primary implementation engineer: repository inspection, all application code, tests, Docker/CI configuration, PR creation and documentation updates | One continuous session supervised by the project owner; see §7 and `TIME_SPENT.md`. |
 | Claude Code `pr-reviewer` subagent — `model: inherit` (Claude Opus 5.5) | Used on every PR | Independent, read-only review of each PR's real diff, published as GitHub COMMENT reviews | `.claude/agents/pr-reviewer.md` is committed. Same model family as the implementer, so this is an independent agent review, **not** a cross-model review. Evidence in §6. |
 | Additional specialist or external model reviewers | Not used | — | No external cross-model review was performed during implementation. |
-| GitHub CodeQL + Dependabot | Used (automated) | Static analysis on every PR; dependency update PRs | CodeQL flagged one issue (missing rate limit on `/health/ready`), fixed in PR #2. Dependabot opened PRs #3–#6, which were left for the owner to decide. |
+| GitHub CodeQL + Dependabot | Used (automated) | Static analysis on every PR; dependency update PRs | CodeQL flagged one issue (missing rate limit on `/health/ready`), fixed in PR #2. Dependabot opened #3–#6, #8, #10 and #11; the owner decided on each (merged #4–#6 and #11). |
 
 ### Usage status at submission
 
@@ -41,7 +41,7 @@ The following project files provide instructions or context to AI tools and shou
 | `ASSUMPTIONS.md` | Records interpretations of ambiguity and their status | Present; update when implementation evidence confirms or invalidates an assumption. |
 | `DECISIONS.md` | Records architectural decisions, alternatives, rationale and consequences | Present; change only through deliberate decision/change control. |
 | `PLAN.md` | Implementation phases, time targets, dependencies and exit gates | Present; update actual phase status and deviations during execution. |
-| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 9 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
+| `.claude/agents/pr-reviewer.md` | Dedicated reviewer-agent instructions | Committed (tracked since the initial docs commit). Used for all 12 review runs in §6. Tools: Read, Grep, Glob, Bash; read-only; `model: inherit`. |
 | `.github/workflows/ci.yml`, `codeql.yml`, `.github/dependabot.yml` | Automated verification on every PR | Added in PR #2 at the owner's request; E2E job added in PR 5. |
 
 `README.md`, `TIME_SPENT.md`, `PR_DESCRIPTION.md` and the detailed `docs/` contracts are execution/submission records. Update them from the real implementation and measured results rather than treating the planning documents as evidence that the work has been completed.
@@ -97,9 +97,11 @@ The entries below are **paraphrased summaries of the directions that shaped the 
 - **Auto-mode safety checks (Claude Code):** (1) a multi-heredoc shell command was blocked because the checker could not rule out a dangerous removal. Nothing was deleted; the files were rewritten with the Write tool. (2) `git commit && git push` was blocked as an outward action until the owner approved. The local commit was then made separately.
 - **Owner-only actions:** all assessment PRs were merged by the owner, not the AI.
 - **Merge/fix race (PR #9):** the owner merged #9 at its reviewed head `3ebab07` (14:48 IST) while the implementer was preparing fixes for the reviewer's P3 findings. The fix commit `14deff9` was then pushed to the already-merged branch. The re-review caught that these fixes never reached `main` and had no CI run. Correction: the fixes ship in PR 5, which contains `14deff9`, and they get CI there. Lesson: tell the owner when a fix round is in progress, and check the PR state before pushing.
-- **Dependabot:** after CI landed, Dependabot opened #3 (Node 22 → 26 base image), #4–#6 (GitHub Actions major bumps). The AI did not merge or modify them. It recommended holding the untested Node 26 bump and left the decision to the owner.
+- **Dependabot:** after CI landed, Dependabot opened #3, #8 and #10 (Node 22 → 26 base images, still open), #4–#6 (GitHub Actions bumps) and #11 (nginx 1.27 → 1.31). The owner merged #4–#6 and #11. The AI did not merge or modify any of them; it aligned `ci.yml` to the merged action versions and merged `main` into PR #12 to pick up #11.
 
 
+
+## 5. AI Errors, Human Review and Corrections
 
 ### 5.1 Confirmed documentation-process correction
 
@@ -123,6 +125,7 @@ During documentation preparation, the user clarified that edits must remain scop
 | 10 | E2E read the `<h1>` immediately after clicking a product | E2E assertion: expected the homepage hero title | Race with client-side navigation | Wait for the product URL/details first | 5/5 E2E green |
 | 11 | 400 vs 422 mapping for enquiry validation | Reviewer RV2-03 | All schema failures returned 422; the contract says structural problems get 400 | Structural/field split (`be5ee15`) | API tests for both cases |
 | 12 | Enquiry form said "not sent" on any failure, including a gateway timeout where the enquiry may have been stored | Reviewer RV4-01 | Misleading result, which could prompt a duplicate enquiry; nginx also returned HTML for gateway errors | JSON gateway errors; "could not confirm" wording for 504/network (`14deff9`) | RTL test; live: Catalog stopped → JSON 504 with correlation id |
+| 13 | `AI_USAGE.md` recorded PR #9's focused re-review as "CHANGES REQUIRED … P1" | Final reviewer RV5-02 compared it with the published review body | The published review said *no P0/P1/P2 code findings*, plus a delivery gap; the record overstated severity | Restated as published; every §6 row was re-checked against `gh api …/reviews` | RV5 regression check |
 
 Process issue: in one run the reviewer subagent checked out a commit inside the implementer's worktree, leaving it on a detached HEAD. No work was lost. Later review prompts required the reviewer to use its own worktree.
 
@@ -153,7 +156,8 @@ Reviewer: Claude Code `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`, c
 | #7 | `872100b` | REVIEW PASSED (6011398653) | Non-blocking: guard timeout released the email lease | `7d78b0d` (accepted voluntarily) |
 | #7 | `7d78b0d` | REVIEW PASSED (6011412047) | — | — |
 | #9 frontend/gateway | `3ebab07` | REVIEW PASSED with optional P3s (6011463722) | RV4-01 gateway HTML errors / misleading "not sent" on timeout; RV4-02 rating not announced to screen readers; RV4-03 silent 422; RV4-04 stale README table | Owner merged #9 at `3ebab07` (14:48 IST) before the fix commit was pushed |
-| #9 | `14deff9` (pushed after merge) | CHANGES REQUIRED (6011475023): fixes correct, but **not in `main`**; new RV4-05 P3 | P1: RV4-01..03 not merged; RV4-05 unvalidated correlation id echoed into gateway JSON | Fixes shipped via PR 5 (contains `14deff9`) + RV4-05 fix in PR 5; RV4-04 fixed in PR 5 |
+| #9 | `14deff9` (pushed after merge) | Focused re-review (6011475023): fixes correct, **no P0/P1/P2 code findings**, but a delivery gap (not in `main`, no CI run) plus a new optional RV4-05 P3 | RV4-05: unvalidated correlation ID echoed into the gateway's JSON | Fixes carried into PR #12 with RV4-05; README table (RV4-04) corrected in #12 |
+| #12 submission | `22953d2` | CHANGES REQUIRED (6011496306), documentation only: no P0/P1, no code defects | RV5-01..04 P2 (time log not reconciled, a misstated review record, stale README text, missing next-steps section); RV5-05/06 P3; remaining risk: gateway 502 reported as "not sent" | Fixed in the following commit on #12; see that PR for the re-review |
 
 Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.md`.
 
@@ -170,6 +174,9 @@ Later PR reviews are recorded in each PR's conversation and in `PR_DESCRIPTION.m
 | PR #7 initial | `39b2f71` | 268 s | 14 |
 | PR #7 re-review | `872100b` | 162 s | 5 |
 | PR #7 re-review | `7d78b0d` | 163 s | 3 |
+| PR #9 initial | `3ebab07` | 219 s | 16 |
+| PR #9 focused re-review | `14deff9` | 108 s | 7 |
+| PR #12 final submission review | `22953d2` | 311 s | 29 |
 
 Every reviewer finding was validated by the implementer against the code before it was fixed. None was rejected, and one non-blocking observation was voluntarily implemented (`7d78b0d`). Re-reviews were run against the exact new head SHA each time.
 
@@ -190,14 +197,14 @@ Add a row for each meaningful implementation or review session. Keep the entries
 
 ## 8. Before Submission
 
-- [ ] Replace intended-tool descriptions with exact tools/models actually used.
-- [ ] Confirm the agent instruction files included in the committed repository.
-- [ ] Preserve 3–5 meaningful prompts or moments; use exact excerpts where available and label paraphrases clearly.
-- [ ] Add actual examples of AI mistakes and how they were caught, or explicitly state that no material implementation error was observed.
-- [ ] Record actual reviewer agent/model, PR URL, reviewed SHA, verdict and corrections only after they occur.
-- [ ] Record any external cross-model review only if it actually happened.
-- [ ] Ensure no secrets, private credentials or sensitive prompt content are included.
-- [ ] Keep this document consistent with `TIME_SPENT.md`, `PLAN.md`, the final PR and the repository history.
+- [x] Exact tools/models actually used are recorded (§2).
+- [x] Agent instruction files are committed (`CLAUDE.md`, `.claude/agents/pr-reviewer.md`).
+- [x] Key prompts and moments are preserved with verbatim excerpts (§4.6).
+- [x] Actual AI mistakes and how they were caught are recorded (§5.2).
+- [x] Reviewer agent/model, PR URLs, reviewed SHAs, verdicts and corrections are recorded (§6).
+- [x] No external cross-model review is claimed (none was performed).
+- [x] No secrets or credentials are included.
+- [x] Consistent with `TIME_SPENT.md`, the PRs and the git history.
 
 ---
 

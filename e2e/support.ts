@@ -1,10 +1,14 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 
 const MAILPIT_URL = process.env.E2E_MAILPIT_URL ?? 'http://localhost:8025';
 
 /** Reads a single value from a service database via the compose postgres container (test-only access). */
 export function sql(database: 'catalog' | 'notification', query: string): string {
-  return execFileSync('docker', ['compose', 'exec', '-T', 'postgres', 'psql', '-U', 'postgres', '-d', database, '-tAc', query], { encoding: 'utf8' }).trim();
+  // Compose interpolates docker-compose.yml even for `exec`; fall back to .env.example so the suite
+  // also works from a checkout without a local .env (RV5-06).
+  const envFile = existsSync('.env') ? '.env' : '.env.example';
+  return execFileSync('docker', ['compose', '--env-file', envFile, 'exec', '-T', 'postgres', 'psql', '-U', 'postgres', '-d', database, '-tAc', query], { encoding: 'utf8' }).trim();
 }
 
 export async function poll<T>(read: () => T | Promise<T>, done: (value: T) => boolean, timeoutMs = 45_000): Promise<T> {
