@@ -30,6 +30,38 @@ services:
     ports:
       - "127.0.0.1:${SQS_HOST_PORT:-59324}:9324"
 
+  # One-shot schema migration job; the service never creates tables on startup.
+  catalog-migrate:
+    build: { context: ., dockerfile: services/catalog/Dockerfile }
+    image: catalog-platform/catalog-service:local
+    command: ["node", "dist/db/migrate.js"]
+    environment:
+      DATABASE_URL: postgres://catalog_svc:${CATALOG_DB_PASSWORD}@postgres:5432/catalog
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  catalog:
+    image: catalog-platform/catalog-service:local
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://catalog_svc:${CATALOG_DB_PASSWORD}@postgres:5432/catalog
+      PRODUCT_PROVIDER: ${PRODUCT_PROVIDER:-fakestore}
+      FEATURED_PRODUCT_IDS: ${FEATURED_PRODUCT_IDS:-1,5,9,12,18}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN in .env}
+      ENQUIRY_RATE_LIMIT_PER_MINUTE: ${ENQUIRY_RATE_LIMIT_PER_MINUTE:-10}
+      SQS_ENDPOINT: http://elasticmq:9324
+      SQS_REGION: eu-west-1
+      SQS_QUEUE_NAME: catalog-enquiry-events
+      # ElasticMQ ignores credentials; these are placeholders, not secrets. AWS uses the ECS task role.
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+    depends_on:
+      catalog-migrate: { condition: service_completed_successfully }
+      elasticmq: { condition: service_started }
+    restart: unless-stopped
+    # No host ports: reached only through the gateway (public :3000) and by Notification Service (internal :3001).
+
   mailpit:
     image: axllent/mailpit:v1.27
     ports:

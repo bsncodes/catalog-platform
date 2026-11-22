@@ -10,20 +10,25 @@ Implementation is delivered as sequential pull requests into `main` (see `DECISI
 
 | PR | Branch | Scope | Status |
 |---|---|---|---|
-| 1 | `chore/setup` | pnpm workspace, TypeScript/ESLint, shared contracts, PostgreSQL/ElasticMQ/Mailpit | In review |
-| 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback | Pending |
+| 1 | `chore/setup` | pnpm workspace, TypeScript/ESLint, shared contracts, PostgreSQL/ElasticMQ/Mailpit | Merged (#1) |
+| 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback | In review |
 | 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | Pending |
 | 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | Pending |
 | 5 | `test/e2e-docs` | End-to-end verification and final documentation | Pending |
 
-After PR 1 only the local infrastructure is runnable:
+Current runnable state (after PR 2): infrastructure plus Catalog Service (no host port yet; the Gateway arrives in PR 4).
 
 ```bash
 cp .env.example .env
-docker compose up -d          # postgres (healthy), elasticmq, mailpit (healthy)
+docker compose up -d --build          # postgres, elasticmq, mailpit, catalog-migrate (one-shot), catalog
+docker compose ps                     # catalog becomes (healthy) after migrations; requires Docker Compose v2.20+
 pnpm install
-pnpm typecheck && pnpm lint && pnpm test
+pnpm typecheck && pnpm lint && pnpm test   # unit/API tests, no external dependencies
+pnpm test:integration                      # needs the compose postgres + elasticmq running
+docker compose exec catalog wget -qO- http://127.0.0.1:3000/api/catalog/products/featured
 ```
+
+Set `PRODUCT_PROVIDER=fixture` in `.env` to run fully offline against the committed product snapshot.
 
 ## Assessment scope
 
@@ -211,6 +216,21 @@ The initial request shape is:
 `entity.type` is `PRODUCT` or `CATEGORY`. Name, email and phone are required; message is optional. The backend resolves the sales recipient from trusted server-side configuration. The frontend must not supply an arbitrary recipient address.
 
 A successful enquiry submission returns `202 Accepted` after durable persistence. The customer-facing confirmation should say the enquiry was received, not claim that the sales email has already reached the inbox.
+
+## Continuous integration
+
+GitHub Actions run on every pull request to `main` and on pushes to `main`:
+
+| Workflow | Job | What it proves |
+|---|---|---|
+| `ci.yml` | Typecheck, lint and unit tests | `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` |
+| `ci.yml` | Integration tests | `pnpm test:integration` against PostgreSQL 17 and ElasticMQ service containers (outbox atomicity, claim/lease, SQS publish, callback idempotency) |
+| `ci.yml` | Docker Compose smoke test | Builds images, runs migrations via the one-shot job, waits for health, checks featured/category APIs and that an enquiry's outbox event is published to ElasticMQ (offline `fixture` provider) |
+| `codeql.yml` | CodeQL | `security-and-quality` static analysis for JavaScript/TypeScript (also weekly) |
+
+Dependabot (`.github/dependabot.yml`) proposes weekly npm, GitHub Actions and Docker base-image updates.
+
+**Continuous delivery is not automated.** Deploying to AWS (push images to ECR, update ECS Fargate services, sync the frontend to S3/CloudFront) needs an AWS account and a GitHub OIDC deploy role, which are outside the assessment's local-only scope (ADR-016). The intended pipeline is documented in `docs/deployment.md`; adding it is future work.
 
 ## Testing and verification
 

@@ -63,6 +63,7 @@ Do not change an approved architectural decision merely because another technolo
 | ADR-015 | Use local service substitutes while keeping production integrations AWS-compatible | ACCEPTED | ASM-016, ASM-017 |
 | ADR-016 | Defer full AWS provisioning and non-essential product capabilities | ACCEPTED | ASM-024, ASM-026, ASM-027 |
 | ADR-017 | Deliver the implementation as sequential, reviewed PRs into `main` instead of one assessment PR | ACCEPTED (supersedes CLAUDE.md §21 single-PR rule) | — |
+| ADR-018 | Authenticate the internal callback with a shared bearer token on a separate private listener | ACCEPTED | ASM-030, ASM-032 |
 
 ---
 
@@ -675,6 +676,22 @@ Each PR receives its own `pr-reviewer` subagent review, published on that PR. Th
 - The end-to-end journey is only demonstrable once PRs 1–4 are merged; PR 5 provides the full-journey evidence.
 - Review evidence and time spent are recorded per PR.
 - The single-PR wording in `CLAUDE.md` §21/§23 is superseded by this decision for this assessment; the rest of the review workflow (independent reviewer, published verdict, fix-and-re-review) still applies.
+
+---
+
+### ADR-018 — Internal Callback Authentication: Separate Listener + Shared Bearer Token
+
+**Status:** ACCEPTED
+
+**Context:** ASM-030 requires private connectivity plus service-to-service authentication for `PATCH /internal/catalog/enquiries/:id/notification-status`, without prescribing the mechanism.
+
+**Decision:** Catalog Service runs two Express listeners in one process: the public API (port 3000, routed by the Gateway) and the internal API (port 3001, never routed by the Gateway). The internal API requires a bearer token (`INTERNAL_API_TOKEN`, minimum 16 characters) compared with `crypto.timingSafeEqual`.
+
+**Alternatives considered:** mTLS (strong but heavy for local reviewer setup); AWS SigV4/IAM-authorised private API Gateway (good AWS fit, but requires AWS locally); network isolation only (rejected by ASM-030).
+
+**Consequences:**
+- Works identically locally and on ECS; in AWS the token lives in Secrets Manager and the internal port is restricted by security group to the Notification Service task.
+- Token rotation requires coordinated redeploys; an IAM/SigV4 upgrade path is documented as future work.
 
 ---
 

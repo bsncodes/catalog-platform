@@ -90,6 +90,8 @@ All entries in this initial register are marked `ACCEPTED` unless explicitly ide
 | ASM-028 | Visual design | Use a clean, responsive and accessible default design; detailed brand styling is not supplied. | LOW | ACCEPTED |
 | ASM-029 | Customer access | Catalogue browsing and enquiry submission are public; protect internal service operations separately. | MEDIUM | ACCEPTED |
 | ASM-030 | Callback authentication | Protect the internal callback with private service connectivity and service-to-service authentication. | HIGH | ACCEPTED |
+| ASM-031 | Featured products | A configured featured product missing from the provider fails the request (502) instead of showing fewer than five. | LOW | IMPLEMENTED |
+| ASM-032 | Callback authentication | Implement ASM-030 as a shared bearer token on a separate internal listener (port 3001) that the Gateway never routes. | HIGH | IMPLEMENTED |
 
 ---
 
@@ -840,6 +842,40 @@ Document the selected mechanism in `DECISIONS.md` and `docs/api-contracts.md` be
 
 **Validation**  
 Test an authorized callback, missing/invalid credentials and attempts to reach the internal route through the public API surface.
+
+---
+
+### ASM-031 — Missing Configured Featured Product
+
+**Source:** ASM-001 validation clause; `docs/api-contracts.md` §2.1.
+**Impact:** LOW
+**Status:** IMPLEMENTED (covered by `services/catalog/test/catalogService.test.ts`)
+
+**Ambiguity**
+The featured endpoint must return exactly five configured products, but the behaviour when a configured product no longer exists upstream is not specified.
+
+**Assumption**
+Startup configuration requires exactly five distinct IDs. If the provider does not return one of them at request time, the endpoint returns `502 FEATURED_PRODUCT_UNAVAILABLE` and logs an error, rather than silently returning fewer than five or substituting another product.
+
+**Rationale**
+A silent substitution would misrepresent a business merchandising choice; an explicit error makes the configuration drift visible.
+
+**Validation**
+Unit test: a configured id `999` yields 502 `FEATURED_PRODUCT_UNAVAILABLE`.
+
+---
+
+### ASM-032 — Internal Callback Authentication Mechanism
+
+**Source:** ASM-030; `docs/api-contracts.md` §4.1.
+**Impact:** HIGH
+**Status:** IMPLEMENTED (covered by `services/catalog/test/publicApi.test.ts`)
+
+**Assumption**
+Catalog Service serves the internal callback on a separate HTTP listener (`INTERNAL_PORT`, default 3001) that the API Gateway never routes, and requires `Authorization: Bearer <INTERNAL_API_TOKEN>` compared in constant time. The public listener does not mount `/internal` at all. Locally the token comes from `.env`; in AWS it is a Secrets Manager secret injected into both ECS task definitions, and the internal listener is reachable only via private service connectivity (security group restricted to Notification Service). See `DECISIONS.md` ADR-018.
+
+**Validation**
+API tests: missing/wrong token → 401; valid token → 200; the public app returns 404 for `/internal/...`.
 
 ---
 
