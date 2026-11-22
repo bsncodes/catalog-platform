@@ -8,11 +8,11 @@ Delivery was split into five sequential PRs into `main` at the project owner's r
 |---|---|---|---|---|---|
 | [#1](https://github.com/bsncodes/catalog-platform/pull/1) | `chore/setup` | Workspace, shared contracts, PostgreSQL/ElasticMQ/Mailpit | `9ccbd8b` | CHANGES REQUIRED → fixed → REVIEW PASSED | Merged by owner |
 | [#2](https://github.com/bsncodes/catalog-platform/pull/2) | `feat/catalog-service` | Catalog Service, outbox, internal callback, CI/CodeQL/Dependabot | `03a53dd` | PASSED with P2s → fixed → CHANGES REQUIRED (RV2-06) → fixed → REVIEW PASSED | Merged by owner |
-| [#7](https://github.com/bsncodes/catalog-platform/pull/7) | `feat/notification-service` | Notification Service | `872100b` (+ follow-up `7d78b0d`) | CHANGES REQUIRED → fixed → REVIEW PASSED | See PR |
-| PR 4 | `feat/frontend-gateway` | React frontend + Nginx gateway | see PR | see PR | see PR |
+| [#7](https://github.com/bsncodes/catalog-platform/pull/7) | `feat/notification-service` | Notification Service | `7d78b0d` | CHANGES REQUIRED → fixed → REVIEW PASSED → follow-up → REVIEW PASSED | Merged by owner |
+| [#9](https://github.com/bsncodes/catalog-platform/pull/9) | `feat/frontend-gateway` | React frontend + Nginx gateway | see PR | see PR | see PR |
 | PR 5 | `test/e2e-docs` | Playwright E2E, CI E2E job, final documentation | see PR | see PR | see PR |
 
-PRs #3–#6 are Dependabot dependency updates, not part of the assessment implementation.
+PRs #3–#6 and #8 are Dependabot dependency updates, not part of the assessment implementation. The owner merged #4–#6 (GitHub Actions bumps); #3 and #8 (Node 26 base images) are open.
 
 ## Summary
 

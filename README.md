@@ -12,9 +12,9 @@ Implementation is delivered as sequential pull requests into `main` (see `DECISI
 |---|---|---|---|
 | 1 | `chore/setup` | pnpm workspace, TypeScript/ESLint, shared contracts, PostgreSQL/ElasticMQ/Mailpit | Merged (#1) |
 | 2 | `feat/catalog-service` | Catalogue APIs, enquiries, Transactional Outbox, internal callback, CI | Merged (#2) |
-| 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | In review (#7) |
-| 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | In review |
-| 5 | `test/e2e-docs` | End-to-end verification and final documentation | Pending |
+| 3 | `feat/notification-service` | SQS consumer, ledger, templates, email, callback retry, Circuit Breaker | Merged (#7) |
+| 4 | `feat/frontend-gateway` | React app and Nginx API Gateway | In review (#9) |
+| 5 | `test/e2e-docs` | End-to-end verification and final documentation | Open (submission PR) |
 
 Current runnable state (after PR 4): the complete application.
 
