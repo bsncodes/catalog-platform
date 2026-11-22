@@ -75,7 +75,8 @@ export class NotificationProcessor {
       providerMessageId = result.providerMessageId;
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
-      await this.repository.recordEmailFailed(event.eventId, reason);
+      // Outcome unknown after our guard fires: keep the lease so a redelivery cannot send in parallel.
+      await this.repository.recordEmailFailed(event.eventId, reason, error instanceof EmailSendTimeoutError);
       const exhausted = message.receiveCount >= this.options.maxReceiveCount;
       const retryDelaySeconds = Math.ceil(backoffWithJitter(message.receiveCount, this.options.emailRetryBaseSeconds * 1000, 300_000) / 1000);
       log.error(
@@ -115,11 +116,18 @@ export class NotificationProcessor {
   }
 }
 
+class EmailSendTimeoutError extends Error {
+  constructor(ms: number) {
+    super(`Email provider did not respond within ${ms}ms`);
+    this.name = 'EmailSendTimeoutError';
+  }
+}
+
 /** Rejects if the promise has not settled within ms (the underlying send cannot be cancelled; see ASM-034). */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   const timeout = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => reject(new Error(`Email provider did not respond within ${ms}ms`)), ms);
+    timer = setTimeout(() => reject(new EmailSendTimeoutError(ms)), ms);
   });
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }

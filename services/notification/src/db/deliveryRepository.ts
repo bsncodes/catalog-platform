@@ -80,12 +80,18 @@ export class DeliveryRepository {
     return record;
   }
 
-  async recordEmailFailed(eventId: string, error: string): Promise<void> {
+  /**
+   * Records a failed attempt. `keepLease` is used when the send outcome is unknown (our guard timed out
+   * while the provider call may still complete): the lease is kept so a redelivery cannot start a second
+   * send until it expires.
+   */
+  async recordEmailFailed(eventId: string, error: string, keepLease = false): Promise<void> {
     await this.pool.query(
       `UPDATE notification_deliveries
-          SET email_status = 'FAILED', last_email_error = $2, email_lease_until = NULL, updated_at = now()
+          SET email_status = 'FAILED', last_email_error = $2,
+              email_lease_until = CASE WHEN $3::boolean THEN email_lease_until ELSE NULL END, updated_at = now()
         WHERE event_id = $1 AND email_status <> 'SENT'`,
-      [eventId, error.slice(0, 500)],
+      [eventId, error.slice(0, 500), keepLease],
     );
   }
 

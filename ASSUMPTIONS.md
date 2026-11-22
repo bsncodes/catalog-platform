@@ -905,7 +905,7 @@ Tests: 404 → `FAILED`; max attempts → `FAILED`; 503 → `PENDING` with backo
 **Status:** ACCEPTED
 
 **Assumption**
-SMTP/SES acceptance and the PostgreSQL ledger write cannot be made atomic. If the process crashes after the provider accepts the email but before `email_status = SENT` is committed, SQS redelivers the message and the email is sent again. The window is a few milliseconds and is accepted for this proof of concept. A callback failure never causes a resend, because `SENT` is committed before any callback attempt. A per-event email lease (`email_lease_until`) stops two concurrent consumers from both sending.
+SMTP/SES acceptance and the PostgreSQL ledger write cannot be made atomic. If the process crashes after the provider accepts the email but before `email_status = SENT` is committed, SQS redelivers the message and the email is sent again. The window is a few milliseconds and is accepted for this proof of concept. A callback failure never causes a resend, because `SENT` is committed before any callback attempt. A per-event email lease (`email_lease_until`) stops two concurrent consumers from both sending. If the processor's send guard times out while the provider call may still complete, the lease is **kept** (not cleared), so a redelivery cannot start a parallel send until the lease expires. A definite provider failure releases the lease so the retry can proceed.
 
 ---
 

@@ -83,6 +83,19 @@ describe('NotificationProcessor', () => {
     expect(Date.now() - started).toBeLessThan(3000);
     expect(catalog.calls).toHaveLength(0);
     expect(await ledger(pool, event.eventId)).toMatchObject({ email_status: 'FAILED', last_email_error: 'Email provider did not respond within 200ms' });
+    // The lease is kept: a redelivery while the original send may still complete must not send again.
+    const redelivery = build(pool);
+    expect(await redelivery.processor.handle(msg(event, 2))).toMatchObject({ ack: false, outcome: 'IN_PROGRESS' });
+    expect(redelivery.email.sent).toHaveLength(0);
+  });
+
+  it('a definite provider failure releases the lease so the retry can send immediately', async () => {
+    const email = new FakeEmailProvider();
+    email.failNext = 1;
+    const { processor } = build(pool, { email });
+    const event = makeEvent();
+    await processor.handle(msg(event));
+    expect(await processor.handle(msg(event, 2))).toEqual({ ack: true, outcome: 'SENT' });
   });
 
   it('rejects an invalid event without acking (it will reach the DLQ)', async () => {
