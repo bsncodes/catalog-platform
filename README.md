@@ -278,7 +278,7 @@ Run from the repository root after `pnpm install` (Node 22+, pnpm 10.17):
 | Catalog Service (unit/API) | 45 |
 | Catalog Service (integration) | 18 |
 | Notification Service (unit) | 24 |
-| Notification Service (integration) | 15 |
+| Notification Service (integration) | 16 |
 | Web (React Testing Library) | 14 |
 | End-to-end (Playwright, desktop + mobile Chromium) | 5 |
 
